@@ -20,6 +20,10 @@
     --ink-faint:#847f77;
     --stone:#c4bbac;
     --stone-dim:#948b7c;
+    --ok:#5fc78d;
+    --ok-bg:rgba(95,199,141,0.14);
+    --info:#6fa3e0;
+    --info-bg:rgba(111,163,224,0.16);
     --serif:'Lora', Georgia, serif;
     --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     box-sizing:border-box;
@@ -144,6 +148,7 @@
   .avatar.xs{ width:20px; height:20px; font-size:8.5px; }
   .avatar-stack{ display:flex; }
   .avatar-stack .avatar + .avatar{ margin-left:-6px; }
+  .people-list .avatar{ flex-shrink:0; }
 
   /* ---------- Roadmap cards ---------- */
   .track-legend{ display:flex; gap:22px; margin-bottom:26px; flex-wrap:wrap; }
@@ -151,6 +156,8 @@
   .legend-dot{ width:7px; height:7px; border-radius:50%; }
   .legend-dot.dev{ background:var(--stone); }
   .legend-dot.od{ background:var(--ink-faint); }
+  .legend-dot.status-done{ background:var(--ok); }
+  .legend-dot.status-progress{ background:var(--info); }
 
   .item{
     border:1px solid var(--border); border-radius:14px; background:var(--panel);
@@ -173,22 +180,41 @@
     display:flex; gap:28px; flex-wrap:wrap; margin-top:16px; padding-top:16px;
     border-top:1px solid var(--border-soft);
   }
-  .assign-group{ display:flex; align-items:center; gap:10px; }
-  .assign-label{ font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); }
-  .assign-name{ font-size:12.5px; color:var(--ink-dim); }
+  .assign-group{ display:flex; align-items:flex-start; gap:12px; }
+  .assign-label{
+    font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint);
+    padding-top:4px; white-space:nowrap;
+  }
+  .people-list{ display:flex; flex-wrap:wrap; gap:8px 16px; }
+  .person{ display:flex; align-items:center; gap:7px; }
+  .person-name{ font-size:12.5px; color:var(--ink-dim); white-space:nowrap; }
 
   .item-divider{ height:1px; background:var(--border-soft); margin:18px 0 20px; }
 
   .steps{ list-style:none; margin:0; padding:0; display:grid; gap:11px; }
   .steps li{ display:flex; gap:14px; font-size:14px; color:var(--ink-dim); line-height:1.55; }
-  .steps li .n{ font-family:var(--serif); font-size:12px; color:var(--ink-faint); min-width:18px; padding-top:1px; }
+  .steps li .n{
+    font-family:var(--sans); font-size:10px; font-weight:600; color:var(--ink-faint);
+    min-width:20px; height:20px; border-radius:50%; border:1px solid var(--border);
+    display:inline-flex; align-items:center; justify-content:center; padding-top:0;
+    flex-shrink:0;
+  }
   .steps li span.txt{ color:var(--ink); }
+  .steps li.done .n{ background:var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+  .steps li.done span.txt{ color:var(--ink-dim); }
+  .steps li.progress .n{ background:var(--info-bg); border-color:var(--info); color:var(--info); }
+  .steps li.progress span.txt{ color:var(--ink); font-weight:500; }
 
   .subgrid{ margin-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; }
   .subitem{ border-left:2px solid var(--border); padding:4px 0 4px 14px; }
   .subitem .k{ font-size:11px; color:var(--stone-dim); letter-spacing:0.04em; }
   .subitem .v{ font-size:13.5px; color:var(--ink); margin-top:2px; }
   .subitem .flow{ font-size:11px; color:var(--ink-faint); margin-top:4px; }
+  .subitem.progress{ border-left-color:var(--info); }
+  .subitem.progress .k{ color:var(--info); }
+  .subitem.progress .v{ color:var(--ink); font-weight:500; }
+  .subitem.done{ border-left-color:var(--ok); }
+  .subitem.done .k{ color:var(--ok); }
 
   .note-box{
     margin-top:18px; border:1px dashed var(--border); border-radius:10px; padding:14px 16px;
@@ -292,6 +318,8 @@
       <div class="track-legend">
         <div class="legend-item"><span class="legend-dot dev"></span>HR Projects</div>
         <div class="legend-item"><span class="legend-dot od"></span>Organizational Development</div>
+        <div class="legend-item"><span class="legend-dot status-done"></span>Completed step</div>
+        <div class="legend-item"><span class="legend-dot status-progress"></span>In progress</div>
       </div>
 
       <div id="itemList">
@@ -311,17 +339,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Rahul">RA</span><span class="avatar sm" title="Arun">AR</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Gather requirements from stakeholders</span></li><li><span class="n">02</span><span class="txt">Draft business requirements per module</span></li><li><span class="n">03</span><span class="txt">Internal review for completeness</span></li><li><span class="n">04</span><span class="txt">Circulate for stakeholder feedback</span></li><li><span class="n">05</span><span class="txt">Sign-off — locked baseline for FRD</span></li></ul>
+        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Gather requirements from stakeholders</span></li><li class="done"><span class="n">02</span><span class="txt">Draft business requirements per module</span></li><li class="done"><span class="n">03</span><span class="txt">Internal review for completeness</span></li><li class="done"><span class="n">04</span><span class="txt">Circulate for stakeholder feedback</span></li><li><span class="n">05</span><span class="txt">Sign-off — locked baseline for FRD</span></li></ul>
         
       </div>
       <div class="item" data-people="bernard amulya" data-track="dev">
@@ -339,17 +366,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Amulya">AM</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Translate signed-off BRDs into functional specs</span></li><li><span class="n">02</span><span class="txt">Joint feasibility review with development team</span></li><li><span class="n">03</span><span class="txt">Validate specs trace back to BRD requirements</span></li><li><span class="n">04</span><span class="txt">Formal sign-off, business and IT</span></li><li><span class="n">05</span><span class="txt">Handoff package to development backlog</span></li></ul>
+        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Translate signed-off BRDs into functional specs</span></li><li><span class="n">02</span><span class="txt">Joint feasibility review with development team</span></li><li><span class="n">03</span><span class="txt">Validate specs trace back to BRD requirements</span></li><li><span class="n">04</span><span class="txt">Formal sign-off, business and IT</span></li><li><span class="n">05</span><span class="txt">Handoff package to development backlog</span></li></ul>
         
       </div>
       <div class="item" data-people="bernard zahra" data-track="dev">
@@ -367,17 +393,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Zahra">ZA</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Define KPIs and audience per dashboard</span></li><li><span class="n">02</span><span class="txt">Map data sources and confirm data quality</span></li><li><span class="n">03</span><span class="txt">Wireframe and review with stakeholders</span></li><li><span class="n">04</span><span class="txt">Build and connect live data</span></li><li><span class="n">05</span><span class="txt">Internal QA on data accuracy</span></li><li><span class="n">06</span><span class="txt">UAT with end users, then go live</span></li></ul>
+        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Define KPIs and audience per dashboard</span></li><li><span class="n">02</span><span class="txt">Map data sources and confirm data quality</span></li><li><span class="n">03</span><span class="txt">Wireframe and review with stakeholders</span></li><li><span class="n">04</span><span class="txt">Build and connect live data</span></li><li><span class="n">05</span><span class="txt">Internal QA on data accuracy</span></li><li><span class="n">06</span><span class="txt">UAT with end users, then go live</span></li></ul>
         
       </div>
       <div class="item" data-people="bernard zahra arun" data-track="dev">
@@ -395,17 +420,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Zahra">ZA</span><span class="avatar sm" title="Arun">AR</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Scope modules — Leave, Payroll, Master Data</span></li><li><span class="n">02</span><span class="txt">Pull opening balances and full transaction logs since go-live</span></li><li><span class="n">03</span><span class="txt">Rebuild expected current values per employee</span></li><li><span class="n">04</span><span class="txt">Compare expected against actual system values</span></li><li><span class="n">05</span><span class="txt">Root-cause every discrepancy</span></li><li><span class="n">06</span><span class="txt">Corrective action plan — data fixes and process fixes</span></li><li><span class="n">07</span><span class="txt">Re-validate on affected records, then sign off</span></li></ul>
+        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Scope modules — Leave, Payroll, Master Data</span></li><li><span class="n">02</span><span class="txt">Pull opening balances and full transaction logs since go-live</span></li><li><span class="n">03</span><span class="txt">Rebuild expected current values per employee</span></li><li><span class="n">04</span><span class="txt">Compare expected against actual system values</span></li><li><span class="n">05</span><span class="txt">Root-cause every discrepancy</span></li><li><span class="n">06</span><span class="txt">Corrective action plan — data fixes and process fixes</span></li><li><span class="n">07</span><span class="txt">Re-validate on affected records, then sign off</span></li></ul>
         <div class="note-box"><span class="mark">note —</span><span>Reframed as a full reconciliation exercise — not a compliance audit. Every value in the system today is traced back to its opening balance.</span></div>
       </div>
       <div class="item" data-people="shameel bernard amulya arun" data-track="dev">
@@ -423,12 +447,11 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Shameel &amp; Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Amulya">AM</span><span class="avatar sm" title="Arun">AR</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
           </div>
         </div>
 
@@ -451,12 +474,11 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Amulya">AM</span><span class="avatar sm" title="Rahul">RA</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span></div>
           </div>
         </div>
 
@@ -479,12 +501,11 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Shameel &amp; Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Zahra">ZA</span><span class="avatar sm" title="Rahul">RA</span><span class="avatar sm" title="Arun">AR</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
           </div>
         </div>
 
@@ -507,17 +528,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
-            <span class="assign-name">Bernard</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Amulya">AM</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <div class="subgrid"><div class="subitem"><div class="k">a.</div><div class="v">Attendance</div><div class="flow">Dev → test → UAT (device integration) → go live</div></div><div class="subitem"><div class="k">b.</div><div class="v">Payroll &amp; Offboarding</div><div class="flow">Dev → test → UAT with Finance, edge cases → go live</div></div><div class="subitem"><div class="k">c.</div><div class="v">MPP enhancements</div><div class="flow">Dev → test → UAT against policy → go live</div></div><div class="subitem"><div class="k">d.</div><div class="v">IPMP enhancements</div><div class="flow">Dev → test → UAT on sample cycle → go live</div></div><div class="subitem"><div class="k">e.</div><div class="v">Labour Link Integration</div><div class="flow">Dev → vendor / API coordination → compliance check → go live</div></div><div class="subitem"><div class="k">f.</div><div class="v">E-Business Card</div><div class="flow">Design and branding approval → dev → test → go live</div></div><div class="subitem"><div class="k">g.</div><div class="v">Fines &amp; Expenses</div><div class="flow">Dev → test approval workflows and thresholds → go live</div></div><div class="subitem"><div class="k">h.</div><div class="v">Changes — High Priority</div><div class="flow">Expedited design → test → UAT → go live</div></div></div>
+        <div class="subgrid"><div class="subitem"><div class="k">a.</div><div class="v">Attendance</div><div class="flow">Dev → test → UAT (device integration) → go live</div></div><div class="subitem"><div class="k">b.</div><div class="v">Payroll &amp; Offboarding</div><div class="flow">Dev → test → UAT with Finance, edge cases → go live</div></div><div class="subitem"><div class="k">c.</div><div class="v">MPP enhancements</div><div class="flow">Dev → test → UAT against policy → go live</div></div><div class="subitem progress"><div class="k">d.</div><div class="v">IPMP enhancements</div><div class="flow">Dev → test → UAT on sample cycle → go live</div></div><div class="subitem progress"><div class="k">e.</div><div class="v">Labour Link Integration</div><div class="flow">Dev → vendor / API coordination → compliance check → go live</div></div><div class="subitem progress"><div class="k">f.</div><div class="v">E-Business Card</div><div class="flow">Design and branding approval → dev → test → go live</div></div><div class="subitem"><div class="k">g.</div><div class="v">Fines &amp; Expenses</div><div class="flow">Dev → test approval workflows and thresholds → go live</div></div><div class="subitem progress"><div class="k">h.</div><div class="v">Changes — High Priority</div><div class="flow">Expedited design → test → UAT → go live</div></div></div>
         
       </div>
       <div class="item" data-people="shameel nihar leen" data-track="od">
@@ -535,12 +555,11 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span></div>
-            <span class="assign-name">Shameel</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Nihar">NI</span><span class="avatar sm" title="Leen">LE</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span></div>
           </div>
         </div>
 
@@ -563,17 +582,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span></div>
-            <span class="assign-name">Shameel</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Nihar">NI</span><span class="avatar sm" title="Leen">LE</span><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Final review against market data and job titles</span></li><li><span class="n">02</span><span class="txt">Re-confirm budget impact with Finance</span></li><li><span class="n">03</span><span class="txt">Leadership sign-off — structure locked</span></li><li><span class="n">04</span><span class="txt">Reflect new grades and bands in HRMS</span></li><li><span class="n">05</span><span class="txt">Test payroll calculation against new bands</span></li><li><span class="n">06</span><span class="txt">Communicate to managers, then employees</span></li><li><span class="n">07</span><span class="txt">Phased implementation, then post-implementation payroll check</span></li></ul>
+        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Final review against market data and job titles</span></li><li class="done"><span class="n">02</span><span class="txt">Re-confirm budget impact with Finance</span></li><li class="progress"><span class="n">03</span><span class="txt">Leadership sign-off — structure locked</span></li><li><span class="n">04</span><span class="txt">Reflect new grades and bands in HRMS</span></li><li><span class="n">05</span><span class="txt">Test payroll calculation against new bands</span></li><li><span class="n">06</span><span class="txt">Communicate to managers, then employees</span></li><li><span class="n">07</span><span class="txt">Phased implementation, then post-implementation payroll check</span></li></ul>
         <div class="note-box"><span class="mark">note —</span><span>Draft is complete. Remaining work is sign-off, then reflecting the approved structure inside the system itself.</span></div>
       </div>
       <div class="item" data-people="shameel nihar leen rahul bernard" data-track="od">
@@ -591,17 +609,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span></div>
-            <span class="assign-name">Shameel</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Nihar">NI</span><span class="avatar sm" title="Leen">LE</span><span class="avatar sm" title="Rahul">RA</span><span class="avatar owner sm" title="Bernard Tockmaji">BT</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Audit current job titles org-wide</span></li><li><span class="n">02</span><span class="txt">Standardise naming conventions and job families</span></li><li><span class="n">03</span><span class="txt">Map cleaned titles to the salary banding framework</span></li><li><span class="n">04</span><span class="txt">Validate with department heads</span></li><li><span class="n">05</span><span class="txt">Final approval</span></li><li><span class="n">06</span><span class="txt">Update HRIS records and communicate changes</span></li></ul>
+        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Audit current job titles org-wide</span></li><li class="done"><span class="n">02</span><span class="txt">Standardise naming conventions and job families</span></li><li class="done"><span class="n">03</span><span class="txt">Map cleaned titles to the salary banding framework</span></li><li class="progress"><span class="n">04</span><span class="txt">Validate with department heads</span></li><li><span class="n">05</span><span class="txt">Final approval</span></li><li><span class="n">06</span><span class="txt">Update HRIS records and communicate changes</span></li></ul>
         
       </div>
       <div class="item" data-people="shameel nihar leen" data-track="od">
@@ -619,17 +636,16 @@
         <div class="assign-row">
           <div class="assign-group">
             <span class="assign-label">Owner</span>
-            <div class="avatar-stack"><span class="avatar owner sm" title="Shameel Ahmed">SA</span></div>
-            <span class="assign-name">Shameel</span>
+            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
           </div>
           <div class="assign-group">
             <span class="assign-label">Team</span>
-            <div class="avatar-stack"><span class="avatar sm" title="Nihar">NI</span><span class="avatar sm" title="Leen">LE</span></div>
+            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span></div>
           </div>
         </div>
 
         <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Final content review against updated SOPs and salary structure</span></li><li><span class="n">02</span><span class="txt">Legal and compliance sign-off</span></li><li><span class="n">03</span><span class="txt">Leadership sign-off — content locked</span></li><li><span class="n">04</span><span class="txt">Final design and formatting</span></li><li><span class="n">05</span><span class="txt">Distribute via HRMS and formal communication</span></li><li><span class="n">06</span><span class="txt">Track employee acknowledgment</span></li><li><span class="n">07</span><span class="txt">Set the annual review cycle</span></li></ul>
+        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Final content review against updated SOPs and salary structure</span></li><li class="done"><span class="n">02</span><span class="txt">Legal and compliance sign-off</span></li><li class="progress"><span class="n">03</span><span class="txt">Leadership sign-off — content locked</span></li><li><span class="n">04</span><span class="txt">Final design and formatting</span></li><li><span class="n">05</span><span class="txt">Distribute via HRMS and formal communication</span></li><li><span class="n">06</span><span class="txt">Track employee acknowledgment</span></li><li><span class="n">07</span><span class="txt">Set the annual review cycle</span></li></ul>
         <div class="note-box"><span class="mark">note —</span><span>Draft is complete. Remaining work is sign-off and formal distribution, not further drafting.</span></div>
       </div>
       </div>
