@@ -783,7 +783,7 @@
         <button id="logoutBtn" class="chip-reset" type="button">Sign out</button>
       </div>
       <div class="task-app-body">
-        <p class="placeholder-note">This is where task management will live. Tell me what you'd like this page to do, and it gets built in here.</p>
+        <p class="placeholder-note">This is where task management will live — now backed by a shared database, so whatever gets built here is visible to everyone, not just this device. Tell me what you'd like this page to do next.</p>
       </div>
     </div>
 
@@ -849,6 +849,21 @@
 })();
 </script>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyCdGoqsVyfAKvUj-ch-rZs52TChKRwQFFw",
+    authDomain: "hrplanning-7e23f.firebaseapp.com",
+    projectId: "hrplanning-7e23f",
+    storageBucket: "hrplanning-7e23f.firebasestorage.app",
+    messagingSenderId: "173470305008",
+    appId: "1:173470305008:web:2cc2d79d4679c5d3f15035"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
+</script>
+
 <script>
 (function(){
   var CODES = {"1001": "bernard", "1002": "shameel", "1003": "rahul", "1004": "zahra", "1005": "arun", "1006": "amulya", "1007": "nihar", "1008": "leen"};
@@ -875,6 +890,11 @@
 
   function showOnly(el){
     [loginGate, pinSetup, pinEntry, taskApp].forEach(function(s){ s.style.display = (s === el ? '' : 'none'); });
+  }
+
+  function setBusy(btn, busy, label){
+    btn.disabled = busy;
+    btn.textContent = busy ? 'Please wait…' : label;
   }
 
   var pendingCode = null;
@@ -905,49 +925,81 @@
     showOnly(taskApp);
   }
 
-  document.getElementById('codeSubmit').addEventListener('click', function(){
+  document.getElementById('codeSubmit').addEventListener('click', async function(){
+    var btn = this;
     var code = document.getElementById('codeInput').value.trim();
     var errEl = document.getElementById('loginError');
     if(!isFourDigits(code)){ errEl.textContent = 'Enter a 4-digit code.'; return; }
     if(!CODES[code]){ errEl.textContent = 'Code not recognised.'; return; }
     errEl.textContent = '';
     pendingCode = code;
-    var stored = localStorage.getItem('pin_' + code);
-    if(stored){
-      document.getElementById('entryName').textContent = NAMES[CODES[code]];
-      document.getElementById('pinEnter').value = '';
-      document.getElementById('pinEntryError').textContent = '';
-      showOnly(pinEntry);
-    } else {
-      document.getElementById('setupName').textContent = NAMES[CODES[code]];
-      document.getElementById('pinNew').value = '';
-      document.getElementById('pinConfirm').value = '';
-      document.getElementById('pinSetupError').textContent = '';
-      showOnly(pinSetup);
+    setBusy(btn, true);
+    try{
+      var doc = await db.collection('pins').doc(code).get();
+      if(doc.exists){
+        document.getElementById('entryName').textContent = NAMES[CODES[code]];
+        document.getElementById('pinEnter').value = '';
+        document.getElementById('pinEntryError').textContent = '';
+        showOnly(pinEntry);
+      } else {
+        document.getElementById('setupName').textContent = NAMES[CODES[code]];
+        document.getElementById('pinNew').value = '';
+        document.getElementById('pinConfirm').value = '';
+        document.getElementById('pinSetupError').textContent = '';
+        showOnly(pinSetup);
+      }
+    } catch(e){
+      errEl.textContent = 'Could not reach the database. Check your connection and try again.';
     }
+    setBusy(btn, false, 'Continue');
   });
 
   document.getElementById('pinSetSubmit').addEventListener('click', async function(){
+    var btn = this;
     var p1 = document.getElementById('pinNew').value.trim();
     var p2 = document.getElementById('pinConfirm').value.trim();
     var errEl = document.getElementById('pinSetupError');
     if(!isFourDigits(p1)){ errEl.textContent = 'PIN must be exactly 4 digits.'; return; }
     if(p1 !== p2){ errEl.textContent = "PINs don't match."; return; }
-    var hash = await sha256(pendingCode + ':' + p1);
-    localStorage.setItem('pin_' + pendingCode, hash);
-    errEl.textContent = '';
-    enterTaskApp(pendingCode);
+    setBusy(btn, true);
+    try{
+      var hash = await sha256(pendingCode + ':' + p1);
+      var ref = db.collection('pins').doc(pendingCode);
+      var existing = await ref.get();
+      if(existing.exists){
+        // Someone else set it moments ago on another device — send this person to the entry screen instead.
+        errEl.textContent = '';
+        document.getElementById('entryName').textContent = NAMES[CODES[pendingCode]];
+        document.getElementById('pinEnter').value = '';
+        document.getElementById('pinEntryError').textContent = '';
+        showOnly(pinEntry);
+      } else {
+        await ref.set({ hash: hash, setAt: firebase.firestore.FieldValue.serverTimestamp() });
+        errEl.textContent = '';
+        enterTaskApp(pendingCode);
+      }
+    } catch(e){
+      errEl.textContent = 'Could not reach the database. Check your connection and try again.';
+    }
+    setBusy(btn, false, 'Set PIN & continue');
   });
 
   document.getElementById('pinEnterSubmit').addEventListener('click', async function(){
+    var btn = this;
     var p = document.getElementById('pinEnter').value.trim();
     var errEl = document.getElementById('pinEntryError');
     if(!isFourDigits(p)){ errEl.textContent = 'Enter your 4-digit PIN.'; return; }
-    var hash = await sha256(pendingCode + ':' + p);
-    var stored = localStorage.getItem('pin_' + pendingCode);
-    if(hash !== stored){ errEl.textContent = 'Incorrect PIN.'; return; }
-    errEl.textContent = '';
-    enterTaskApp(pendingCode);
+    setBusy(btn, true);
+    try{
+      var hash = await sha256(pendingCode + ':' + p);
+      var doc = await db.collection('pins').doc(pendingCode).get();
+      var stored = doc.exists ? doc.data().hash : null;
+      if(hash !== stored){ errEl.textContent = 'Incorrect PIN.'; }
+      else { errEl.textContent = ''; enterTaskApp(pendingCode); }
+    } catch(e){
+      errEl.textContent = 'Could not reach the database. Check your connection and try again.';
+    }
+    setBusy(btn, false, 'Unlock');
   });
 
   document.getElementById('logoutBtn').addEventListener('click', function(){
