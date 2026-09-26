@@ -321,6 +321,82 @@
     .filter-row{ flex-direction:column; }
     .filter-label{ padding-top:0; }
   }
+
+  /* ---------- Dynamic status dot (not_started / progress / done) ---------- */
+  .status-dot{
+    width:18px; height:18px; border-radius:50%; border:1px solid var(--border);
+    background:var(--panel-2); flex-shrink:0; display:inline-block;
+    position:relative;
+  }
+  .status-dot.progress{ background:var(--info-bg); border-color:var(--info); }
+  .status-dot.done{ background:var(--ok-bg); border-color:var(--ok); }
+  .status-dot.done::after{
+    content:"✓"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--ok);
+  }
+  .status-dot.clickable{ cursor:pointer; }
+  .status-dot.clickable:hover{ border-color:var(--stone); }
+
+  .status-pill-label{ font-size:11px; color:var(--ink-faint); }
+
+  /* ---------- Manager add-task panel ---------- */
+  .manager-panel{
+    border:1px solid var(--border); border-radius:14px; background:var(--panel-2);
+    padding:22px 24px; margin-bottom:26px;
+  }
+  .manager-panel h3{ font-family:var(--serif); font-weight:500; font-size:18px; margin:0 0 4px; }
+  .panel-hint{ font-size:12px; color:var(--ink-faint); margin:0 0 18px; }
+  .field-label{ display:block; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-faint); margin:16px 0 6px; }
+  .field-label .opt{ text-transform:none; letter-spacing:0; color:var(--ink-faint); }
+  .field-input{
+    width:100%; background:var(--panel-3); border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; color:var(--ink); font-family:var(--sans); font-size:13.5px; outline:none;
+  }
+  .field-input:focus{ border-color:var(--stone); }
+  .field-textarea{ min-height:64px; resize:vertical; font-family:var(--sans); }
+  .date-input{ color-scheme:dark; }
+  .date-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .radio-row, .checkbox-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .radio-pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-dim);
+    border:1px solid var(--border); border-radius:999px; padding:7px 13px; cursor:pointer;
+  }
+  .radio-pill input{ accent-color:var(--stone); }
+  .checkbox-pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-dim);
+    border:1px solid var(--border); border-radius:999px; padding:6px 12px 6px 6px; cursor:pointer;
+  }
+  .checkbox-pill input{ accent-color:var(--stone); }
+  .manager-submit{ margin-top:20px; }
+
+  /* ---------- Task editor (Tasks Management, live) ---------- */
+  .te-card{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:26px 28px; margin-bottom:18px; }
+  .te-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .te-title-row{ display:flex; align-items:center; gap:12px; }
+  .te-title{ font-family:var(--serif); font-weight:500; font-size:19px; }
+  .te-badges{ display:flex; gap:8px; flex-wrap:wrap; }
+  .te-meta{ font-size:12px; color:var(--ink-faint); margin-top:6px; }
+  .te-dates{ display:flex; gap:14px; margin-top:10px; flex-wrap:wrap; }
+  .te-dates label{ font-size:11px; color:var(--ink-faint); display:block; margin-bottom:3px; }
+  .te-dates input{ font-size:12px; padding:6px 8px; }
+  .te-divider{ height:1px; background:var(--border-soft); margin:16px 0; }
+
+  .te-subtask{ display:flex; align-items:flex-start; gap:10px; padding:8px 0; }
+  .te-subtask-text{ font-size:13.5px; color:var(--ink); flex:1; }
+  .te-subpoints{ margin-left:28px; padding-left:14px; border-left:2px solid var(--border-soft); }
+  .te-subpoint{ display:flex; align-items:flex-start; gap:9px; padding:6px 0; }
+  .te-subpoint-text{ font-size:12.5px; color:var(--ink-dim); flex:1; }
+
+  .te-add-row{ display:flex; gap:8px; margin-top:10px; }
+  .te-add-row input{ flex:1; font-size:12.5px; padding:8px 10px; }
+  .te-add-row button{
+    background:var(--panel-3); border:1px solid var(--border); border-radius:8px;
+    color:var(--ink-dim); font-size:12px; padding:8px 14px; cursor:pointer; white-space:nowrap;
+  }
+  .te-add-row button:hover{ border-color:var(--stone); color:var(--ink); }
+  .te-add-subpoint-row{ margin-left:28px; }
+
+  .te-empty{ font-size:13px; color:var(--ink-faint); padding:20px 0; text-align:center; }
 </style>
 </head>
 <body>
@@ -406,334 +482,7 @@
         <div class="legend-item"><span class="legend-dot status-progress"></span>In progress</div>
       </div>
 
-      <div id="itemList">
-      
-      <div class="item" data-people="bernard rahul arun" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">01</span>
-            <span class="item-title">BRD — Payroll &amp; Offboarding, Attendance</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Requirement Gathering</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Gather requirements from stakeholders</span></li><li class="done"><span class="n">02</span><span class="txt">Draft business requirements per module</span></li><li class="done"><span class="n">03</span><span class="txt">Internal review for completeness</span></li><li class="done"><span class="n">04</span><span class="txt">Circulate for stakeholder feedback</span></li><li><span class="n">05</span><span class="txt">Sign-off — locked baseline for FRD</span></li></ul>
-        
-      </div>
-      <div class="item" data-people="bernard amulya" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">02</span>
-            <span class="item-title">FRD — Payroll &amp; Offboarding, Attendance, IPMP, MPP, Expenses &amp; Fines</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Specification</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Translate signed-off BRDs into functional specs</span></li><li><span class="n">02</span><span class="txt">Joint feasibility review with development team</span></li><li><span class="n">03</span><span class="txt">Validate specs trace back to BRD requirements</span></li><li><span class="n">04</span><span class="txt">Formal sign-off, business and IT</span></li><li><span class="n">05</span><span class="txt">Handoff package to development backlog</span></li></ul>
-        
-      </div>
-      <div class="item" data-people="bernard zahra" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">03</span>
-            <span class="item-title">Dashboards</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Build</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Define KPIs and audience per dashboard</span></li><li><span class="n">02</span><span class="txt">Map data sources and confirm data quality</span></li><li><span class="n">03</span><span class="txt">Wireframe and review with stakeholders</span></li><li><span class="n">04</span><span class="txt">Build and connect live data</span></li><li><span class="n">05</span><span class="txt">Internal QA on data accuracy</span></li><li><span class="n">06</span><span class="txt">UAT with end users, then go live</span></li></ul>
-        
-      </div>
-      <div class="item" data-people="bernard zahra arun" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">04</span>
-            <span class="item-title">System Audit</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Reconciliation</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="progress"><span class="n">01</span><span class="txt">Scope modules — Leave, Payroll, Master Data</span></li><li><span class="n">02</span><span class="txt">Pull opening balances and full transaction logs since go-live</span></li><li><span class="n">03</span><span class="txt">Rebuild expected current values per employee</span></li><li><span class="n">04</span><span class="txt">Compare expected against actual system values</span></li><li><span class="n">05</span><span class="txt">Root-cause every discrepancy</span></li><li><span class="n">06</span><span class="txt">Corrective action plan — data fixes and process fixes</span></li><li><span class="n">07</span><span class="txt">Re-validate on affected records, then sign off</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Reframed as a full reconciliation exercise — not a compliance audit. Every value in the system today is traced back to its opening balance.</span></div>
-      </div>
-      <div class="item" data-people="shameel bernard amulya arun" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">05</span>
-            <span class="item-title">HRIS Training — New Team Handover</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Knowledge Transfer</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Define the new team's scope against HRMS team and HR Planning</span></li><li><span class="n">02</span><span class="txt">Full knowledge inventory across every module</span></li><li><span class="n">03</span><span class="txt">Documentation handover — BRDs, FRDs, SOPs, audit findings</span></li><li><span class="n">04</span><span class="txt">Structured sit-in sessions, module by module</span></li><li><span class="n">05</span><span class="txt">Supervised hands-on practice in sandbox, then live</span></li><li><span class="n">06</span><span class="txt">Support and escalation process handover</span></li><li><span class="n">07</span><span class="txt">Competency check per module</span></li><li><span class="n">08</span><span class="txt">Formal sign-off and transition support period</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Reframed from end-user training to a full system handover — the new team is built to independently own and support HRMS.</span></div>
-      </div>
-      <div class="item" data-people="bernard amulya rahul" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">06</span>
-            <span class="item-title">Change Request Management</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Ongoing</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Log CR with business justification</span></li><li><span class="n">02</span><span class="txt">Impact assessment — cost, time, risk</span></li><li><span class="n">03</span><span class="txt">Prioritisation and approval</span></li><li><span class="n">04</span><span class="txt">Build the fix or enhancement</span></li><li><span class="n">05</span><span class="txt">Test — internal, then UAT if user-facing</span></li><li><span class="n">06</span><span class="txt">Deploy and close with documentation update</span></li></ul>
-        
-      </div>
-      <div class="item" data-people="shameel bernard zahra rahul arun" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">07</span>
-            <span class="item-title">IPMP &amp; MPP Exercise</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Sequenced after 8c / 8d</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Zahra">ZA</span><span class="person-name">Zahra</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar sm" title="Arun">AR</span><span class="person-name">Arun</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Communicate cycle timeline and expectations</span></li><li><span class="n">02</span><span class="txt">Managers set and cascade goals and KPIs</span></li><li><span class="n">03</span><span class="txt">Mid-cycle check-ins and progress tracking</span></li><li><span class="n">04</span><span class="txt">Self-assessment and manager assessment</span></li><li><span class="n">05</span><span class="txt">Calibration sessions across departments</span></li><li><span class="n">06</span><span class="txt">Finalise ratings — link to increments, promotions, PIPs</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Run only after IPMP and MPP system enhancements (8d, 8c) go live, so the exercise reflects the current, not outdated, system.</span></div>
-      </div>
-      <div class="item" data-people="bernard amulya" data-track="dev">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">08</span>
-            <span class="item-title">Development Workstreams</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-dev">HR Projects</span>
-            <span class="badge status">Dev → UAT → Go-Live</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Amulya">AM</span><span class="person-name">Amulya</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <div class="subgrid"><div class="subitem"><div class="k">a.</div><div class="v">Attendance</div><div class="flow">Dev → test → UAT (device integration) → go live</div></div><div class="subitem"><div class="k">b.</div><div class="v">Payroll &amp; Offboarding</div><div class="flow">Dev → test → UAT with Finance, edge cases → go live</div></div><div class="subitem"><div class="k">c.</div><div class="v">MPP enhancements</div><div class="flow">Dev → test → UAT against policy → go live</div></div><div class="subitem progress"><div class="k">d.</div><div class="v">IPMP enhancements</div><div class="flow">Dev → test → UAT on sample cycle → go live</div></div><div class="subitem progress"><div class="k">e.</div><div class="v">Labour Link Integration</div><div class="flow">Dev → vendor / API coordination → compliance check → go live</div></div><div class="subitem progress"><div class="k">f.</div><div class="v">E-Business Card</div><div class="flow">Design and branding approval → dev → test → go live</div></div><div class="subitem"><div class="k">g.</div><div class="v">Fines &amp; Expenses</div><div class="flow">Dev → test approval workflows and thresholds → go live</div></div><div class="subitem progress"><div class="k">h.</div><div class="v">Changes — High Priority</div><div class="flow">Expedited design → test → UAT → go live</div></div></div>
-        
-      </div>
-      <div class="item" data-people="shameel nihar leen" data-track="od">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">09</span>
-            <span class="item-title">SOPs — Onboarding, Offboarding</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-od">Organizational Development</span>
-            <span class="badge status">Two-Track</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li><span class="n">01</span><span class="txt">Map current HRMS state, as it runs today</span></li><li><span class="n">02</span><span class="txt">Define the ideal process, independent of system limits</span></li><li><span class="n">03</span><span class="txt">Gap comparison — sufficient vs. insufficient</span></li><li><span class="n">04</span><span class="txt">Sufficient gaps move to SOP draft; insufficient gaps become HRMS change requests</span></li><li><span class="n">05</span><span class="txt">Draft interim SOP and target SOP</span></li><li><span class="n">06</span><span class="txt">Review and sign-off, then rollout and training</span></li><li><span class="n">07</span><span class="txt">Track linked change requests to closure, then retire the interim SOP</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Two tracks running in parallel: what the HRMS already supports becomes the interim SOP; what it can't becomes a Change Request feeding item 6.</span></div>
-      </div>
-      <div class="item" data-people="shameel nihar leen bernard" data-track="od">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">10</span>
-            <span class="item-title">Salary Structure Exercise</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-od">Organizational Development</span>
-            <span class="badge status">Draft Ready — Closure</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Final review against market data and job titles</span></li><li class="done"><span class="n">02</span><span class="txt">Re-confirm budget impact with Finance</span></li><li class="progress"><span class="n">03</span><span class="txt">Leadership sign-off — structure locked</span></li><li><span class="n">04</span><span class="txt">Reflect new grades and bands in HRMS</span></li><li><span class="n">05</span><span class="txt">Test payroll calculation against new bands</span></li><li><span class="n">06</span><span class="txt">Communicate to managers, then employees</span></li><li><span class="n">07</span><span class="txt">Phased implementation, then post-implementation payroll check</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Draft is complete. Remaining work is sign-off, then reflecting the approved structure inside the system itself.</span></div>
-      </div>
-      <div class="item" data-people="shameel nihar leen rahul bernard" data-track="od">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">11</span>
-            <span class="item-title">Jobs &amp; Titles Cleansing Exercise</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-od">Organizational Development</span>
-            <span class="badge status">In Progress</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span><span class="person"><span class="avatar sm" title="Rahul">RA</span><span class="person-name">Rahul</span></span><span class="person"><span class="avatar owner sm" title="Bernard Tockmaji">BT</span><span class="person-name">Bernard Tockmaji</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Audit current job titles org-wide</span></li><li class="done"><span class="n">02</span><span class="txt">Standardise naming conventions and job families</span></li><li class="done"><span class="n">03</span><span class="txt">Map cleaned titles to the salary banding framework</span></li><li class="progress"><span class="n">04</span><span class="txt">Validate with department heads</span></li><li><span class="n">05</span><span class="txt">Final approval</span></li><li><span class="n">06</span><span class="txt">Update HRIS records and communicate changes</span></li></ul>
-        
-      </div>
-      <div class="item" data-people="shameel nihar leen" data-track="od">
-        <div class="item-top">
-          <div class="item-id">
-            <span class="item-index">12</span>
-            <span class="item-title">Employee Handbook</span>
-          </div>
-          <div class="item-badges">
-            <span class="badge track-od">Organizational Development</span>
-            <span class="badge status">Draft Ready — Closure</span>
-          </div>
-        </div>
-
-        <div class="assign-row">
-          <div class="assign-group">
-            <span class="assign-label">Owner</span>
-            <div class="people-list"><span class="person"><span class="avatar owner sm" title="Shameel Ahmed">SA</span><span class="person-name">Shameel Ahmed</span></span></div>
-          </div>
-          <div class="assign-group">
-            <span class="assign-label">Team</span>
-            <div class="people-list"><span class="person"><span class="avatar sm" title="Nihar">NI</span><span class="person-name">Nihar</span></span><span class="person"><span class="avatar sm" title="Leen">LE</span><span class="person-name">Leen</span></span></div>
-          </div>
-        </div>
-
-        <div class="item-divider"></div>
-        <ul class="steps"><li class="done"><span class="n">01</span><span class="txt">Final content review against updated SOPs and salary structure</span></li><li class="done"><span class="n">02</span><span class="txt">Legal and compliance sign-off</span></li><li class="progress"><span class="n">03</span><span class="txt">Leadership sign-off — content locked</span></li><li><span class="n">04</span><span class="txt">Final design and formatting</span></li><li><span class="n">05</span><span class="txt">Distribute via HRMS and formal communication</span></li><li><span class="n">06</span><span class="txt">Track employee acknowledgment</span></li><li><span class="n">07</span><span class="txt">Set the annual review cycle</span></li></ul>
-        <div class="note-box"><span class="mark">note —</span><span>Draft is complete. Remaining work is sign-off and formal distribution, not further drafting.</span></div>
-      </div>
-      </div>
-
+      <div id="itemList"></div>
     </section>
 
     <section class="section">
@@ -783,7 +532,56 @@
         <button id="logoutBtn" class="chip-reset" type="button">Sign out</button>
       </div>
       <div class="task-app-body">
-        <p class="placeholder-note">This is where task management will live — now backed by a shared database, so whatever gets built here is visible to everyone, not just this device. Tell me what you'd like this page to do next.</p>
+
+        <div id="managerPanel" class="manager-panel" style="display:none">
+          <h3>Add a main task</h3>
+          <p class="panel-hint">Only Shameel and Bernard can create or reassign main tasks.</p>
+
+          <label class="field-label">Title</label>
+          <input id="mtTitle" class="field-input" type="text" placeholder="e.g. Vendor Contract Renewal">
+
+          <label class="field-label">Track</label>
+          <div class="radio-row">
+            <label class="radio-pill"><input type="radio" name="mtTrack" value="dev" checked> HR Projects</label>
+            <label class="radio-pill"><input type="radio" name="mtTrack" value="od"> Organizational Development</label>
+          </div>
+
+          <label class="field-label">Tag <span class="opt">(optional short label)</span></label>
+          <input id="mtTag" class="field-input" type="text" placeholder="e.g. Build, Reconciliation, Two-Track">
+
+          <label class="field-label">Owner(s)</label>
+          <div class="checkbox-row" id="mtOwners"></div>
+
+          <label class="field-label">Team</label>
+          <div class="checkbox-row" id="mtTeam"></div>
+
+          <label class="field-label">Status</label>
+          <div class="radio-row">
+            <label class="radio-pill"><input type="radio" name="mtStatus" value="not_started" checked> Not started</label>
+            <label class="radio-pill"><input type="radio" name="mtStatus" value="progress"> In progress</label>
+            <label class="radio-pill"><input type="radio" name="mtStatus" value="done"> Completed</label>
+          </div>
+
+          <div class="date-row">
+            <div>
+              <label class="field-label">Start date</label>
+              <input id="mtStart" class="field-input date-input" type="date">
+            </div>
+            <div>
+              <label class="field-label">End date</label>
+              <input id="mtEnd" class="field-input date-input" type="date">
+            </div>
+          </div>
+
+          <label class="field-label">Note <span class="opt">(optional)</span></label>
+          <textarea id="mtNote" class="field-input field-textarea" placeholder="Any context worth flagging on the card"></textarea>
+
+          <button id="mtSubmit" class="login-btn manager-submit" type="button">Add main task</button>
+          <div id="mtError" class="login-error"></div>
+        </div>
+
+        <div id="taskEditorMount"></div>
+
       </div>
     </div>
 
@@ -796,58 +594,6 @@
       <span class="conf">Prepared for internal distribution — HR Planning &amp; Organizational Development.</span>
     </div>
   </div>
-
-<script>
-(function(){
-  var ownerChips = Array.prototype.slice.call(document.querySelectorAll('.owner-chip'));
-  var memberChips = Array.prototype.slice.call(document.querySelectorAll('.member-chip'));
-  var items = Array.prototype.slice.call(document.querySelectorAll('.item'));
-  var resetBtn = document.getElementById('resetFilters');
-  var countEl = document.getElementById('filterCount');
-  var total = items.length;
-
-  var activeOwners = new Set();
-  var activeMembers = new Set();
-
-  function apply(){
-    var shown = 0;
-    items.forEach(function(it){
-      var people = (it.getAttribute('data-people') || '').split(' ');
-      var ownerOk = activeOwners.size === 0 || people.some(function(p){ return activeOwners.has(p); });
-      var memberOk = activeMembers.size === 0 || people.some(function(p){ return activeMembers.has(p); });
-      var visible = ownerOk && memberOk;
-      it.classList.toggle('hidden', !visible);
-      if(visible) shown++;
-    });
-    countEl.innerHTML = '<b>' + shown + '</b> of ' + total + ' initiatives shown';
-  }
-
-  ownerChips.forEach(function(chip){
-    chip.addEventListener('click', function(){
-      var id = chip.getAttribute('data-owner');
-      if(activeOwners.has(id)){ activeOwners.delete(id); chip.classList.remove('active'); }
-      else { activeOwners.add(id); chip.classList.add('active'); }
-      apply();
-    });
-  });
-
-  memberChips.forEach(function(chip){
-    chip.addEventListener('click', function(){
-      var id = chip.getAttribute('data-member');
-      if(activeMembers.has(id)){ activeMembers.delete(id); chip.classList.remove('active'); }
-      else { activeMembers.add(id); chip.classList.add('active'); }
-      apply();
-    });
-  });
-
-  resetBtn.addEventListener('click', function(){
-    activeOwners.clear();
-    activeMembers.clear();
-    ownerChips.concat(memberChips).forEach(function(c){ c.classList.remove('active'); });
-    apply();
-  });
-})();
-</script>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -868,6 +614,8 @@
 (function(){
   var CODES = {"1001": "bernard", "1002": "shameel", "1003": "rahul", "1004": "zahra", "1005": "arun", "1006": "amulya", "1007": "nihar", "1008": "leen"};
   var NAMES = {"shameel": "Shameel Ahmed", "bernard": "Bernard Tockmaji", "rahul": "Rahul", "zahra": "Zahra", "arun": "Arun", "amulya": "Amulya", "nihar": "Nihar", "leen": "Leen"};
+  window.CODES = CODES;
+  window.NAMES = NAMES;
 
   // ---- Tab switching ----
   var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
@@ -1017,6 +765,411 @@
       }
     });
   });
+})();
+</script>
+
+<script>
+(function(){
+  var SEED_DATA = [{"id": "01", "order": 1, "title": "BRD \u2014 Payroll &amp; Offboarding, Attendance", "track": "dev", "tag": "Requirement Gathering", "status": "progress", "owners": ["bernard"], "team": ["rahul", "arun"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Gather requirements from stakeholders", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Draft business requirements per module", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Internal review for completeness", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Circulate for stakeholder feedback", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Sign-off \u2014 locked baseline for FRD", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "02", "order": 2, "title": "FRD \u2014 Payroll &amp; Offboarding, Attendance, IPMP, MPP, Expenses &amp; Fines", "track": "dev", "tag": "Specification", "status": "progress", "owners": ["bernard"], "team": ["amulya"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Translate signed-off BRDs into functional specs", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Joint feasibility review with development team", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Validate specs trace back to BRD requirements", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Formal sign-off, business and IT", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Handoff package to development backlog", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "03", "order": 3, "title": "Dashboards", "track": "dev", "tag": "Build", "status": "progress", "owners": ["bernard"], "team": ["zahra"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Define KPIs and audience per dashboard", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Map data sources and confirm data quality", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Wireframe and review with stakeholders", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Build and connect live data", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Internal QA on data accuracy", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "UAT with end users, then go live", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "04", "order": 4, "title": "System Audit", "track": "dev", "tag": "Reconciliation", "status": "progress", "owners": ["bernard"], "team": ["zahra", "arun"], "note": "Reframed as a full reconciliation exercise \u2014 not a compliance audit. Every value in the system today is traced back to its opening balance.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Scope modules \u2014 Leave, Payroll, Master Data", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Pull opening balances and full transaction logs since go-live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Rebuild expected current values per employee", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Compare expected against actual system values", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Root-cause every discrepancy", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Corrective action plan \u2014 data fixes and process fixes", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "Re-validate on affected records, then sign off", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "05", "order": 5, "title": "HRIS Training \u2014 New Team Handover", "track": "dev", "tag": "Knowledge Transfer", "status": "not_started", "owners": ["shameel", "bernard"], "team": ["amulya", "arun"], "note": "Reframed from end-user training to a full system handover \u2014 the new team is built to independently own and support HRMS.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Define the new team's scope against HRMS team and HR Planning", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Full knowledge inventory across every module", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Documentation handover \u2014 BRDs, FRDs, SOPs, audit findings", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Structured sit-in sessions, module by module", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Supervised hands-on practice in sandbox, then live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Support and escalation process handover", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "Competency check per module", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s8", "text": "Formal sign-off and transition support period", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "06", "order": 6, "title": "Change Request Management", "track": "dev", "tag": "Ongoing", "status": "not_started", "owners": ["bernard"], "team": ["amulya", "rahul"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Log CR with business justification", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Impact assessment \u2014 cost, time, risk", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Prioritisation and approval", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Build the fix or enhancement", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Test \u2014 internal, then UAT if user-facing", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Deploy and close with documentation update", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "07", "order": 7, "title": "IPMP &amp; MPP Exercise", "track": "dev", "tag": "Sequenced after 8c / 8d", "status": "not_started", "owners": ["shameel", "bernard"], "team": ["zahra", "rahul", "arun"], "note": "Run only after IPMP and MPP system enhancements (8d, 8c) go live, so the exercise reflects the current, not outdated, system.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Communicate cycle timeline and expectations", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Managers set and cascade goals and KPIs", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Mid-cycle check-ins and progress tracking", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Self-assessment and manager assessment", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Calibration sessions across departments", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Finalise ratings \u2014 link to increments, promotions, PIPs", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "08", "order": 8, "title": "Development Workstreams", "track": "dev", "tag": "Dev \u2192 UAT \u2192 Go-Live", "status": "progress", "owners": ["bernard"], "team": ["amulya"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "a. Attendance \u2014 Dev \u2192 test \u2192 UAT (device integration) \u2192 go live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "b. Payroll &amp; Offboarding \u2014 Dev \u2192 test \u2192 UAT with Finance, edge cases \u2192 go live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "c. MPP enhancements \u2014 Dev \u2192 test \u2192 UAT against policy \u2192 go live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "d. IPMP enhancements \u2014 Dev \u2192 test \u2192 UAT on sample cycle \u2192 go live", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "e. Labour Link Integration \u2014 Dev \u2192 vendor / API coordination \u2192 compliance check \u2192 go live", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "f. E-Business Card \u2014 Design and branding approval \u2192 dev \u2192 test \u2192 go live", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "g. Fines &amp; Expenses \u2014 Dev \u2192 test approval workflows and thresholds \u2192 go live", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s8", "text": "h. Changes \u2014 High Priority \u2014 Expedited design \u2192 test \u2192 UAT \u2192 go live", "status": "progress", "createdBy": "bernard", "subpoints": []}]}, {"id": "09", "order": 9, "title": "SOPs \u2014 Onboarding, Offboarding", "track": "od", "tag": "Two-Track", "status": "not_started", "owners": ["shameel"], "team": ["nihar", "leen"], "note": "Two tracks running in parallel: what the HRMS already supports becomes the interim SOP; what it can't becomes a Change Request feeding item 6.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Map current HRMS state, as it runs today", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Define the ideal process, independent of system limits", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Gap comparison \u2014 sufficient vs. insufficient", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Sufficient gaps move to SOP draft; insufficient gaps become HRMS change requests", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Draft interim SOP and target SOP", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Review and sign-off, then rollout and training", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "Track linked change requests to closure, then retire the interim SOP", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "10", "order": 10, "title": "Salary Structure Exercise", "track": "od", "tag": "Draft Ready \u2014 Closure", "status": "progress", "owners": ["shameel"], "team": ["nihar", "leen", "bernard"], "note": "Draft is complete. Remaining work is sign-off, then reflecting the approved structure inside the system itself.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Final review against market data and job titles", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Re-confirm budget impact with Finance", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Leadership sign-off \u2014 structure locked", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Reflect new grades and bands in HRMS", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Test payroll calculation against new bands", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Communicate to managers, then employees", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "Phased implementation, then post-implementation payroll check", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "11", "order": 11, "title": "Jobs &amp; Titles Cleansing Exercise", "track": "od", "tag": "In Progress", "status": "progress", "owners": ["shameel"], "team": ["nihar", "leen", "rahul", "bernard"], "note": null, "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Audit current job titles org-wide", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Standardise naming conventions and job families", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Map cleaned titles to the salary banding framework", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Validate with department heads", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Final approval", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Update HRIS records and communicate changes", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}, {"id": "12", "order": 12, "title": "Employee Handbook", "track": "od", "tag": "Draft Ready \u2014 Closure", "status": "progress", "owners": ["shameel"], "team": ["nihar", "leen"], "note": "Draft is complete. Remaining work is sign-off and formal distribution, not further drafting.", "startDate": null, "endDate": null, "createdBy": "bernard", "subtasks": [{"id": "s1", "text": "Final content review against updated SOPs and salary structure", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s2", "text": "Legal and compliance sign-off", "status": "done", "createdBy": "bernard", "subpoints": []}, {"id": "s3", "text": "Leadership sign-off \u2014 content locked", "status": "progress", "createdBy": "bernard", "subpoints": []}, {"id": "s4", "text": "Final design and formatting", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s5", "text": "Distribute via HRMS and formal communication", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s6", "text": "Track employee acknowledgment", "status": "not_started", "createdBy": "bernard", "subpoints": []}, {"id": "s7", "text": "Set the annual review cycle", "status": "not_started", "createdBy": "bernard", "subpoints": []}]}];
+  var INITIALS = {shameel:'SA', bernard:'BT', rahul:'RA', zahra:'ZA', arun:'AR', amulya:'AM', nihar:'NI', leen:'LE'};
+  var ROLE = {shameel:'owner', bernard:'owner', rahul:'member', zahra:'member', arun:'member', amulya:'member', nihar:'member', leen:'member'};
+  var STATUS_LABEL = {not_started:'Not started', progress:'In progress', done:'Completed'};
+  var STATUS_NEXT = {not_started:'progress', progress:'done', done:'not_started'};
+  var MEMBER_ORDER = ['rahul','zahra','arun','amulya','nihar','leen'];
+  var ALL_PEOPLE_ORDER = ['shameel','bernard'].concat(MEMBER_ORDER);
+
+  var allTasks = [];
+  var activeOwners = new Set();
+  var activeMembers = new Set();
+
+  function currentPerson(){
+    var code = sessionStorage.getItem('activeCode');
+    return code && window.CODES ? window.CODES[code] : null;
+  }
+  function isManager(){
+    var p = currentPerson();
+    return p === 'bernard' || p === 'shameel';
+  }
+  function personName(id){ return (window.NAMES && window.NAMES[id]) || id; }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function personChip(pid){
+    var role = ROLE[pid] === 'owner' ? 'avatar owner sm' : 'avatar sm';
+    return '<span class="person"><span class="' + role + '" title="' + personName(pid) + '">' + INITIALS[pid] +
+           '</span><span class="person-name">' + personName(pid) + '</span></span>';
+  }
+
+  // ---------------------------------------------------------------------
+  // Seeding: run once, guarded by a create-only sentinel doc
+  // ---------------------------------------------------------------------
+  async function ensureSeeded(){
+    var seedRef = db.collection('meta').doc('seedStatus');
+    try{
+      await db.runTransaction(async function(tx){
+        var doc = await tx.get(seedRef);
+        if(doc.exists){ throw new Error('already-seeded'); }
+        tx.set(seedRef, { seededAt: firebase.firestore.FieldValue.serverTimestamp() });
+      });
+    } catch(e){
+      return; // someone else already seeded, or the create lost the race
+    }
+    var batch = db.batch();
+    SEED_DATA.forEach(function(task){
+      var data = Object.assign({}, task);
+      delete data.id;
+      batch.set(db.collection('mainTasks').doc(task.id), data);
+    });
+    await batch.commit();
+  }
+
+  // ---------------------------------------------------------------------
+  // Home page: read-only roadmap, driven by allTasks + filters
+  // ---------------------------------------------------------------------
+  function stepLiClass(status){
+    if(status === 'done') return ' class="done"';
+    if(status === 'progress') return ' class="progress"';
+    return '';
+  }
+
+  function renderHomeCard(t){
+    var trackLabel = t.track === 'dev' ? 'HR Projects' : 'Organizational Development';
+    var badgeCls = t.track === 'dev' ? 'track-dev' : 'track-od';
+    var idxLabel = String(t.order).padStart(2, '0');
+    var ownerChips = (t.owners || []).map(personChip).join('');
+    var teamChips = (t.team || []).map(personChip).join('');
+    var stepsHtml = (t.subtasks || []).map(function(s, i){
+      return '<li' + stepLiClass(s.status) + '><span class="n">' + String(i + 1).padStart(2, '0') +
+             '</span><span class="txt">' + escapeHtml(s.text) + '</span></li>';
+    }).join('');
+    var noteHtml = t.note ? '<div class="note-box"><span class="mark">note —</span><span>' + escapeHtml(t.note) + '</span></div>' : '';
+    return '' +
+      '<div class="item">' +
+        '<div class="item-top">' +
+          '<div class="item-id"><span class="item-index">' + idxLabel + '</span><span class="item-title">' + t.title + '</span></div>' +
+          '<div class="item-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
+          (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') + '</div>' +
+        '</div>' +
+        '<div class="assign-row">' +
+          '<div class="assign-group"><span class="assign-label">Owner</span><div class="people-list">' + ownerChips + '</div></div>' +
+          '<div class="assign-group"><span class="assign-label">Team</span><div class="people-list">' + teamChips + '</div></div>' +
+        '</div>' +
+        '<div class="item-divider"></div>' +
+        '<ul class="steps">' + stepsHtml + '</ul>' +
+        noteHtml +
+      '</div>';
+  }
+
+  function renderHome(){
+    var container = document.getElementById('itemList');
+    var countEl = document.getElementById('filterCount');
+    if(!container) return;
+    var filtered = allTasks.filter(function(t){
+      var people = (t.owners || []).concat(t.team || []);
+      var ownerOk = activeOwners.size === 0 || people.some(function(p){ return activeOwners.has(p); });
+      var memberOk = activeMembers.size === 0 || people.some(function(p){ return activeMembers.has(p); });
+      return ownerOk && memberOk;
+    });
+    if(countEl) countEl.innerHTML = '<b>' + filtered.length + '</b> of ' + allTasks.length + ' initiatives shown';
+    container.innerHTML = filtered.map(renderHomeCard).join('') || '<p class="te-empty">No initiatives yet.</p>';
+  }
+
+  // Owner / member filter chips (already in the markup)
+  Array.prototype.slice.call(document.querySelectorAll('.owner-chip')).forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var id = chip.getAttribute('data-owner');
+      if(activeOwners.has(id)){ activeOwners.delete(id); chip.classList.remove('active'); }
+      else { activeOwners.add(id); chip.classList.add('active'); }
+      renderHome();
+    });
+  });
+  Array.prototype.slice.call(document.querySelectorAll('.member-chip')).forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var id = chip.getAttribute('data-member');
+      if(activeMembers.has(id)){ activeMembers.delete(id); chip.classList.remove('active'); }
+      else { activeMembers.add(id); chip.classList.add('active'); }
+      renderHome();
+    });
+  });
+  var resetBtn = document.getElementById('resetFilters');
+  if(resetBtn){
+    resetBtn.addEventListener('click', function(){
+      activeOwners.clear();
+      activeMembers.clear();
+      Array.prototype.slice.call(document.querySelectorAll('.owner-chip, .member-chip')).forEach(function(c){ c.classList.remove('active'); });
+      renderHome();
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Tasks Management: live editor
+  // ---------------------------------------------------------------------
+  function statusDot(status, clickable, dataAttrs){
+    var cls = 'status-dot' + (status === 'progress' ? ' progress' : status === 'done' ? ' done' : '') + (clickable ? ' clickable' : '');
+    return '<span class="' + cls + '"' + (clickable ? ' role="button"' : '') + ' ' + dataAttrs + ' title="' + STATUS_LABEL[status] + ' — click to change"></span>';
+  }
+
+  function renderSubpoints(taskId, sub){
+    var pts = sub.subpoints || [];
+    var rows = pts.map(function(p){
+      var clickable = !!currentPerson();
+      var dot = statusDot(p.status, clickable, 'data-action="cycle-point" data-task="' + taskId + '" data-sub="' + sub.id + '" data-point="' + p.id + '"');
+      return '<div class="te-subpoint">' + dot + '<span class="te-subpoint-text">' + escapeHtml(p.text) + '</span></div>';
+    }).join('');
+    var addRow = currentPerson() ? (
+      '<div class="te-add-row te-add-subpoint-row">' +
+        '<input type="text" placeholder="Add a sub-point…" data-newpoint-for="' + sub.id + '">' +
+        '<button type="button" data-action="add-point" data-task="' + taskId + '" data-sub="' + sub.id + '">Add</button>' +
+      '</div>'
+    ) : '';
+    return '<div class="te-subpoints">' + rows + addRow + '</div>';
+  }
+
+  function renderEditorSubtask(taskId, sub){
+    var clickable = !!currentPerson();
+    var dot = statusDot(sub.status, clickable, 'data-action="cycle-sub" data-task="' + taskId + '" data-sub="' + sub.id + '"');
+    return '' +
+      '<div class="te-subtask">' + dot + '<span class="te-subtask-text">' + escapeHtml(sub.text) + '</span></div>' +
+      renderSubpoints(taskId, sub);
+  }
+
+  function renderEditorCard(t){
+    var trackLabel = t.track === 'dev' ? 'HR Projects' : 'Organizational Development';
+    var badgeCls = t.track === 'dev' ? 'track-dev' : 'track-od';
+    var idxLabel = String(t.order).padStart(2, '0');
+    var manager = isManager();
+    var mainDot = statusDot(t.status, manager, 'data-action="cycle-main" data-task="' + t.id + '"');
+    var ownerChips = (t.owners || []).map(personChip).join('');
+    var teamChips = (t.team || []).map(personChip).join('');
+    var subtasksHtml = (t.subtasks || []).map(function(s){ return renderEditorSubtask(t.id, s); }).join('');
+    var addSubtaskRow = currentPerson() ? (
+      '<div class="te-add-row">' +
+        '<input type="text" placeholder="Add a subtask…" data-newsub-for="' + t.id + '">' +
+        '<button type="button" data-action="add-sub" data-task="' + t.id + '">Add subtask</button>' +
+      '</div>'
+    ) : '';
+    var noteHtml = t.note ? '<div class="note-box"><span class="mark">note —</span><span>' + escapeHtml(t.note) + '</span></div>' : '';
+    return '' +
+      '<div class="te-card">' +
+        '<div class="te-top">' +
+          '<div class="te-title-row">' + mainDot + '<span class="te-title">' + idxLabel + '. ' + t.title + '</span></div>' +
+          '<div class="te-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
+          (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') +
+          '<span class="status-pill-label">' + STATUS_LABEL[t.status] + '</span></div>' +
+        '</div>' +
+        '<div class="assign-row">' +
+          '<div class="assign-group"><span class="assign-label">Owner</span><div class="people-list">' + ownerChips + '</div></div>' +
+          '<div class="assign-group"><span class="assign-label">Team</span><div class="people-list">' + teamChips + '</div></div>' +
+        '</div>' +
+        (t.startDate || t.endDate ? '<div class="te-meta">' + (t.startDate || '—') + ' → ' + (t.endDate || '—') + '</div>' : '') +
+        noteHtml +
+        '<div class="te-divider"></div>' +
+        subtasksHtml +
+        addSubtaskRow +
+      '</div>';
+  }
+
+  function renderTaskEditor(){
+    var mount = document.getElementById('taskEditorMount');
+    if(!mount) return;
+    mount.innerHTML = allTasks.length ? allTasks.map(renderEditorCard).join('') : '<p class="te-empty">No main tasks yet.</p>';
+
+    var mgrPanel = document.getElementById('managerPanel');
+    if(mgrPanel) mgrPanel.style.display = isManager() ? '' : 'none';
+  }
+
+  // Event delegation for the task editor mount (status dots + add buttons)
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var action = el.getAttribute('data-action');
+    var taskId = el.getAttribute('data-task');
+
+    if(action === 'cycle-main'){
+      if(!isManager()) return;
+      cycleMainStatus(taskId);
+    } else if(action === 'cycle-sub'){
+      if(!currentPerson()) return;
+      cycleSubStatus(taskId, el.getAttribute('data-sub'));
+    } else if(action === 'cycle-point'){
+      if(!currentPerson()) return;
+      cyclePointStatus(taskId, el.getAttribute('data-sub'), el.getAttribute('data-point'));
+    } else if(action === 'add-sub'){
+      var input = document.querySelector('[data-newsub-for="' + taskId + '"]');
+      if(input && input.value.trim()) { addSubtask(taskId, input.value.trim()); input.value = ''; }
+    } else if(action === 'add-point'){
+      var subId = el.getAttribute('data-sub');
+      var pInput = document.querySelector('[data-newpoint-for="' + subId + '"]');
+      if(pInput && pInput.value.trim()) { addSubpoint(taskId, subId, pInput.value.trim()); pInput.value = ''; }
+    }
+  });
+  // Enter-key support for the add-subtask / add-subpoint inputs
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter') return;
+    var el = e.target;
+    if(el.matches('[data-newsub-for]')){
+      var taskId = el.getAttribute('data-newsub-for');
+      if(el.value.trim()){ addSubtask(taskId, el.value.trim()); el.value = ''; }
+    } else if(el.matches('[data-newpoint-for]')){
+      var subId = el.getAttribute('data-newpoint-for');
+      var btn = document.querySelector('[data-action="add-point"][data-sub="' + subId + '"]');
+      var taskId = btn ? btn.getAttribute('data-task') : null;
+      if(taskId && el.value.trim()){ addSubpoint(taskId, subId, el.value.trim()); el.value = ''; }
+    }
+  });
+
+  async function cycleMainStatus(taskId){
+    var ref = db.collection('mainTasks').doc(taskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var cur = doc.data().status || 'not_started';
+      tx.update(ref, { status: STATUS_NEXT[cur] });
+    });
+  }
+
+  async function cycleSubStatus(taskId, subId){
+    var ref = db.collection('mainTasks').doc(taskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === subId){ s.status = STATUS_NEXT[s.status || 'not_started']; }
+        return s;
+      });
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function cyclePointStatus(taskId, subId, pointId){
+    var ref = db.collection('mainTasks').doc(taskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === subId){
+          s.subpoints = (s.subpoints || []).map(function(p){
+            if(p.id === pointId){ p.status = STATUS_NEXT[p.status || 'not_started']; }
+            return p;
+          });
+        }
+        return s;
+      });
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function addSubtask(taskId, text){
+    var ref = db.collection('mainTasks').doc(taskId);
+    var newSub = { id: 's_' + Date.now(), text: text, status: 'not_started', createdBy: currentPerson(), subpoints: [] };
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).concat([newSub]);
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function addSubpoint(taskId, subId, text){
+    var ref = db.collection('mainTasks').doc(taskId);
+    var newPoint = { id: 'p_' + Date.now(), text: text, status: 'not_started', createdBy: currentPerson() };
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === subId){ s.subpoints = (s.subpoints || []).concat([newPoint]); }
+        return s;
+      });
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Add main task (manager-only panel)
+  // ---------------------------------------------------------------------
+  function populatePeopleCheckboxes(){
+    var ownersEl = document.getElementById('mtOwners');
+    var teamEl = document.getElementById('mtTeam');
+    if(!ownersEl || !teamEl) return;
+    ownersEl.innerHTML = ['shameel', 'bernard'].map(function(pid){
+      return '<label class="checkbox-pill"><input type="checkbox" value="' + pid + '"> ' + personName(pid) + '</label>';
+    }).join('');
+    teamEl.innerHTML = ALL_PEOPLE_ORDER.map(function(pid){
+      return '<label class="checkbox-pill"><input type="checkbox" value="' + pid + '"> ' + personName(pid) + '</label>';
+    }).join('');
+  }
+  populatePeopleCheckboxes();
+
+  var mtSubmit = document.getElementById('mtSubmit');
+  if(mtSubmit){
+    mtSubmit.addEventListener('click', async function(){
+      var errEl = document.getElementById('mtError');
+      var title = document.getElementById('mtTitle').value.trim();
+      if(!title){ errEl.textContent = 'Give the task a title.'; return; }
+      var track = document.querySelector('input[name="mtTrack"]:checked').value;
+      var status = document.querySelector('input[name="mtStatus"]:checked').value;
+      var tag = document.getElementById('mtTag').value.trim();
+      var note = document.getElementById('mtNote').value.trim();
+      var startDate = document.getElementById('mtStart').value || null;
+      var endDate = document.getElementById('mtEnd').value || null;
+      var owners = Array.prototype.slice.call(document.querySelectorAll('#mtOwners input:checked')).map(function(i){ return i.value; });
+      var team = Array.prototype.slice.call(document.querySelectorAll('#mtTeam input:checked')).map(function(i){ return i.value; });
+      if(owners.length === 0){ errEl.textContent = 'Pick at least one owner (Shameel and/or Bernard).'; return; }
+
+      errEl.textContent = '';
+      mtSubmit.disabled = true;
+      mtSubmit.textContent = 'Adding…';
+      try{
+        var nextOrder = allTasks.reduce(function(max, t){ return Math.max(max, t.order || 0); }, 0) + 1;
+        var id = String(nextOrder).padStart(2, '0');
+        await db.collection('mainTasks').doc(id).set({
+          order: nextOrder, title: title, track: track, tag: tag || null, status: status,
+          owners: owners, team: team, note: note || null, startDate: startDate, endDate: endDate,
+          createdBy: currentPerson(), subtasks: []
+        });
+        document.getElementById('mtTitle').value = '';
+        document.getElementById('mtTag').value = '';
+        document.getElementById('mtNote').value = '';
+        document.getElementById('mtStart').value = '';
+        document.getElementById('mtEnd').value = '';
+        Array.prototype.slice.call(document.querySelectorAll('#mtOwners input, #mtTeam input')).forEach(function(i){ i.checked = false; });
+      } catch(e){
+        errEl.textContent = 'Could not save. Check your connection and try again.';
+      }
+      mtSubmit.disabled = false;
+      mtSubmit.textContent = 'Add main task';
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Wiring: keep task editor in sync with login state, and boot everything
+  // ---------------------------------------------------------------------
+  var origEnterTaskApp = window.enterTaskApp;
+  document.addEventListener('DOMContentLoaded', function(){});
+
+  // Patch: re-render the editor whenever the Tasks tab is opened / login changes.
+  var tasksTabBtn = document.querySelector('.tab-btn[data-view="tasks"]');
+  if(tasksTabBtn){ tasksTabBtn.addEventListener('click', function(){ renderTaskEditor(); }); }
+  var logoutBtnEl = document.getElementById('logoutBtn');
+  if(logoutBtnEl){ logoutBtnEl.addEventListener('click', function(){ renderTaskEditor(); }); }
+  var pinEnterBtn = document.getElementById('pinEnterSubmit');
+  if(pinEnterBtn){ pinEnterBtn.addEventListener('click', function(){ setTimeout(renderTaskEditor, 300); }); }
+  var pinSetBtn = document.getElementById('pinSetSubmit');
+  if(pinSetBtn){ pinSetBtn.addEventListener('click', function(){ setTimeout(renderTaskEditor, 300); }); }
+
+  db.collection('mainTasks').orderBy('order').onSnapshot(function(snapshot){
+    allTasks = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+    renderHome();
+    renderTaskEditor();
+  }, function(err){
+    console.error('mainTasks listener error', err);
+  });
+
+  ensureSeeded();
 })();
 </script>
 
