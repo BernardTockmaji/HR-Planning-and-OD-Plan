@@ -469,20 +469,20 @@
     font-size:10px; color:var(--ink-faint); white-space:nowrap; padding-left:6px;
   }
 
-  /* Hover tooltip: subtasks for this main task */
-  .gantt-tooltip{
-    display:none; position:absolute; top:100%; margin-top:6px; left:200px;
-    z-index:10; min-width:260px; max-width:360px;
+  /* Hover tooltip: subtasks for the hovered task. Fixed positioning means it
+     can never be clipped by the chart's horizontal-scroll container. */
+  .gantt-tooltip-fixed{
+    display:none; position:fixed; z-index:200; min-width:260px; max-width:360px;
     background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
-    padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.5); pointer-events:none;
   }
-  .gantt-row:hover .gantt-tooltip{ display:block; }
-  .gantt-tooltip .tt-title{ font-family:var(--serif); font-size:13px; color:var(--ink); margin-bottom:8px; }
-  .gantt-tooltip .tt-sub{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-dim); padding:3px 0; }
-  .gantt-tooltip .tt-dot{ width:7px; height:7px; border-radius:50%; background:var(--ink-faint); flex-shrink:0; }
-  .gantt-tooltip .tt-dot.progress{ background:var(--info); }
-  .gantt-tooltip .tt-dot.done{ background:var(--ok); }
-  .gantt-tooltip .tt-empty{ font-size:11.5px; color:var(--ink-faint); }
+  .gantt-tooltip-fixed.visible{ display:block; }
+  .gantt-tooltip-fixed .tt-title{ font-family:var(--serif); font-size:13px; color:var(--ink); margin-bottom:8px; }
+  .gantt-tooltip-fixed .tt-sub{ display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--ink-dim); padding:3px 0; }
+  .gantt-tooltip-fixed .tt-dot{ width:7px; height:7px; border-radius:50%; background:var(--ink-faint); flex-shrink:0; margin-top:3px; }
+  .gantt-tooltip-fixed .tt-dot.progress{ background:var(--info); }
+  .gantt-tooltip-fixed .tt-dot.done{ background:var(--ok); }
+  .gantt-tooltip-fixed .tt-empty{ font-size:11.5px; color:var(--ink-faint); }
 </style>
 </head>
 <body>
@@ -709,6 +709,7 @@
       </div>
 
       <div id="ganttMount"></div>
+      <div id="ganttTooltip" class="gantt-tooltip-fixed"></div>
       <p id="ganttUndatedNote" class="te-empty" style="display:none"></p>
     </section>
 
@@ -1184,15 +1185,14 @@
     return status === 'progress' ? 'progress' : status === 'done' ? 'done' : '';
   }
 
-  function renderGanttTooltip(t){
+  function ganttTooltipContent(t){
     var subs = t.subtasks || [];
-    if(!subs.length){
-      return '<div class="gantt-tooltip"><div class="tt-title">' + t.title + '</div><div class="tt-empty">No subtasks yet.</div></div>';
-    }
+    var title = '<div class="tt-title">' + t.title + '</div>';
+    if(!subs.length) return title + '<div class="tt-empty">No subtasks yet.</div>';
     var rows = subs.map(function(s){
       return '<div class="tt-sub"><span class="tt-dot ' + subtaskDotClass(s.status) + '"></span><span>' + escapeHtml(s.text) + '</span></div>';
     }).join('');
-    return '<div class="gantt-tooltip"><div class="tt-title">' + t.title + '</div>' + rows + '</div>';
+    return title + rows;
   }
 
   function renderGantt(){
@@ -1267,7 +1267,6 @@
         var left = pct(s), width = Math.max(pct(e) - pct(s), 1.5);
         var trackCls = t.track === 'dev' ? 'dev' : 'od';
         var statusCls = t.status === 'progress' ? 'status-progress' : t.status === 'done' ? 'status-done' : '';
-        var idxLabel = String(t.order).padStart(2, '0');
         var cleanTitle = escapeHtml(t.title.replace(/&amp;/g, '&'));
         var dateRange = t.startDate + ' \u2192 ' + t.endDate;
         var isNarrow = width < NARROW_THRESHOLD;
@@ -1275,17 +1274,46 @@
         var outsideLabel = isNarrow
           ? '<span class="gantt-bar-outside-label" style="left:' + (left + width) + '%">' + dateRange + '</span>'
           : '';
-        return '<div class="gantt-row">' +
-          '<div class="gantt-label" title="' + cleanTitle + '">' + idxLabel + '. ' + t.title + '</div>' +
+        return '<div class="gantt-row" data-task-id="' + t.id + '">' +
+          '<div class="gantt-label" title="' + cleanTitle + '">' + t.title + '</div>' +
           '<div class="gantt-track-area">' +
             '<div class="gantt-bar ' + trackCls + ' ' + statusCls + (isNarrow ? ' narrow' : '') + '" style="left:' + left + '%; width:' + width + '%;">' + barInner + '</div>' +
             outsideLabel +
           '</div>' +
-          renderGanttTooltip(t) +
         '</div>';
       }).join('');
 
     mount.innerHTML = '<div class="gantt-wrap"><div class="gantt-scale">' + scaleHtml + todayHtml + '</div>' + rowsHtml + '</div>';
+
+    // Wire the floating tooltip: fixed positioning means it's never clipped
+    // by the chart's own horizontal-scroll container.
+    var tip = document.getElementById('ganttTooltip');
+    if(tip){
+      Array.prototype.slice.call(mount.querySelectorAll('.gantt-row')).forEach(function(row){
+        row.addEventListener('mouseenter', function(){
+          var task = allTasks.filter(function(x){ return x.id === row.getAttribute('data-task-id'); })[0];
+          if(!task) return;
+          tip.innerHTML = ganttTooltipContent(task);
+          tip.classList.add('visible');
+          positionGanttTooltip(row, tip);
+        });
+        row.addEventListener('mousemove', function(){ positionGanttTooltip(row, tip); });
+        row.addEventListener('mouseleave', function(){ tip.classList.remove('visible'); });
+      });
+    }
+  }
+
+  function positionGanttTooltip(row, tip){
+    var r = row.getBoundingClientRect();
+    var top = r.bottom + 6;
+    var left = r.left + 200; // align roughly under the bar area, past the label column
+    var tipWidth = tip.offsetWidth || 280;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    if(left + tipWidth > vw - 12) left = Math.max(12, vw - tipWidth - 12);
+    var tipHeight = tip.offsetHeight || 120;
+    if(top + tipHeight > vh - 12) top = r.top - tipHeight - 6; // flip above the row if it would overflow the bottom
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
   }
   window.renderGantt = renderGantt;
 
