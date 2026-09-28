@@ -430,7 +430,7 @@
   .te-empty{ font-size:13px; color:var(--ink-faint); padding:20px 0; text-align:center; }
 
   /* ---------- Gantt view ---------- */
-  .gantt-wrap{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:10px 24px 24px; overflow-x:auto; }
+  .gantt-wrap{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:10px 24px 24px; overflow-x:auto; overflow-y:visible; }
   .gantt-scale{
     position:relative; height:28px; margin-left:200px; border-bottom:1px solid var(--border-soft);
     min-width:480px;
@@ -439,27 +439,50 @@
     position:absolute; top:0; bottom:0; border-left:1px solid var(--border-soft);
     font-size:10.5px; color:var(--ink-faint); padding-left:6px; white-space:nowrap;
   }
-  .gantt-today{ position:absolute; top:0; bottom:0; border-left:1px solid var(--stone); z-index:2; pointer-events:none; }
+  .gantt-today{ position:absolute; top:0; bottom:0; border-left:1px solid var(--stone); z-index:3; pointer-events:none; }
   .gantt-today-label{
-    position:absolute; top:-2px; left:4px; font-size:10px; color:var(--stone); white-space:nowrap;
+    position:absolute; bottom:-19px; left:5px; font-size:9.5px; color:var(--bg);
+    white-space:nowrap; background:var(--stone); padding:1px 6px; border-radius:4px; font-weight:600;
+    letter-spacing:0.02em;
   }
-  .gantt-row{ display:flex; align-items:center; min-height:44px; border-bottom:1px solid var(--border-soft); }
+  .gantt-row{ display:flex; align-items:center; min-height:44px; border-bottom:1px solid var(--border-soft); position:relative; }
   .gantt-row:last-child{ border-bottom:none; }
+  .gantt-row:hover{ background:var(--panel-2); }
   .gantt-label{
     width:200px; flex-shrink:0; font-size:12.5px; color:var(--ink); padding-right:14px;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default;
   }
   .gantt-track-area{ position:relative; flex:1; height:22px; min-width:480px; }
   .gantt-bar{
     position:absolute; top:2px; height:18px; border-radius:6px;
     border:1px solid var(--border); background:var(--panel-3);
     display:flex; align-items:center; padding:0 8px; font-size:10.5px; color:var(--ink-dim);
-    white-space:nowrap; overflow:hidden;
+    white-space:nowrap; overflow:hidden; cursor:default;
   }
   .gantt-bar.dev{ border-color:rgba(169,160,150,0.45); }
   .gantt-bar.od{ border-color:var(--border); }
   .gantt-bar.status-progress{ background:var(--info-bg); border-color:var(--info); color:var(--info); }
   .gantt-bar.status-done{ background:var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+  .gantt-bar.narrow{ padding:0; }
+  .gantt-bar-outside-label{
+    position:absolute; top:2px; height:18px; display:flex; align-items:center;
+    font-size:10px; color:var(--ink-faint); white-space:nowrap; padding-left:6px;
+  }
+
+  /* Hover tooltip: subtasks for this main task */
+  .gantt-tooltip{
+    display:none; position:absolute; top:100%; margin-top:6px; left:200px;
+    z-index:10; min-width:260px; max-width:360px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .gantt-row:hover .gantt-tooltip{ display:block; }
+  .gantt-tooltip .tt-title{ font-family:var(--serif); font-size:13px; color:var(--ink); margin-bottom:8px; }
+  .gantt-tooltip .tt-sub{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-dim); padding:3px 0; }
+  .gantt-tooltip .tt-dot{ width:7px; height:7px; border-radius:50%; background:var(--ink-faint); flex-shrink:0; }
+  .gantt-tooltip .tt-dot.progress{ background:var(--info); }
+  .gantt-tooltip .tt-dot.done{ background:var(--ok); }
+  .gantt-tooltip .tt-empty{ font-size:11.5px; color:var(--ink-faint); }
 </style>
 </head>
 <body>
@@ -664,6 +687,20 @@
     </section>
 
     <section class="section" style="padding-top:0;">
+
+      <div class="filter-bar">
+        <div class="filter-row">
+          <span class="filter-label">Owner</span>
+          <div class="chip-row" id="ganttOwnerChips"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Team</span>
+          <div class="chip-row" id="ganttMemberChips"></div>
+          <button class="chip-reset" id="ganttResetFilters" type="button">Reset</button>
+        </div>
+        <div class="filter-count" id="ganttFilterCount"></div>
+      </div>
+
       <div class="track-legend">
         <div class="legend-item"><span class="legend-dot dev"></span>HR Projects</div>
         <div class="legend-item"><span class="legend-dot od"></span>Organizational Development</div>
@@ -1140,21 +1177,48 @@
   // ---------------------------------------------------------------------
   // Gantt view: every main task plotted by start/end date
   // ---------------------------------------------------------------------
+  var activeGanttOwners = new Set();
+  var activeGanttMembers = new Set();
+
+  function subtaskDotClass(status){
+    return status === 'progress' ? 'progress' : status === 'done' ? 'done' : '';
+  }
+
+  function renderGanttTooltip(t){
+    var subs = t.subtasks || [];
+    if(!subs.length){
+      return '<div class="gantt-tooltip"><div class="tt-title">' + t.title + '</div><div class="tt-empty">No subtasks yet.</div></div>';
+    }
+    var rows = subs.map(function(s){
+      return '<div class="tt-sub"><span class="tt-dot ' + subtaskDotClass(s.status) + '"></span><span>' + escapeHtml(s.text) + '</span></div>';
+    }).join('');
+    return '<div class="gantt-tooltip"><div class="tt-title">' + t.title + '</div>' + rows + '</div>';
+  }
+
   function renderGantt(){
     var mount = document.getElementById('ganttMount');
     var noteEl = document.getElementById('ganttUndatedNote');
+    var countEl = document.getElementById('ganttFilterCount');
     if(!mount) return;
 
-    var dated = allTasks.filter(function(t){ return t.startDate && t.endDate; });
-    var undatedCount = allTasks.length - dated.length;
+    var filteredAll = allTasks.filter(function(t){
+      var people = (t.owners || []).concat(t.team || []);
+      var ownerOk = activeGanttOwners.size === 0 || people.some(function(p){ return activeGanttOwners.has(p); });
+      var memberOk = activeGanttMembers.size === 0 || people.some(function(p){ return activeGanttMembers.has(p); });
+      return ownerOk && memberOk;
+    });
+    if(countEl) countEl.innerHTML = '<b>' + filteredAll.length + '</b> of ' + allTasks.length + ' initiatives shown';
+
+    var dated = filteredAll.filter(function(t){ return t.startDate && t.endDate; });
+    var undatedCount = filteredAll.length - dated.length;
 
     if(dated.length === 0){
       mount.innerHTML = '';
       if(noteEl){
         noteEl.style.display = '';
-        noteEl.textContent = allTasks.length
-          ? "No tasks have both a start and end date yet. Add dates from a card's Edit button in Tasks Management to see them plotted here."
-          : 'No main tasks yet.';
+        noteEl.textContent = filteredAll.length
+          ? "No matching tasks have both a start and end date yet. Add dates from a card's Edit button in Tasks Management to see them plotted here."
+          : 'No initiatives match this filter.';
       }
       return;
     }
@@ -1162,7 +1226,7 @@
     if(noteEl){
       if(undatedCount > 0){
         noteEl.style.display = '';
-        noteEl.textContent = undatedCount + ' of ' + allTasks.length + " task" + (undatedCount === 1 ? '' : 's') + " don't have both dates set yet, so " + (undatedCount === 1 ? "it isn't" : "they aren't") + ' shown below.';
+        noteEl.textContent = undatedCount + ' of ' + filteredAll.length + " task" + (undatedCount === 1 ? '' : 's') + " don't have both dates set yet, so " + (undatedCount === 1 ? "it isn't" : "they aren't") + ' shown below.';
       } else {
         noteEl.style.display = 'none';
       }
@@ -1194,6 +1258,8 @@
       ? '<div class="gantt-today" style="left:' + pct(today) + '%"><span class="gantt-today-label">Today</span></div>'
       : '';
 
+    var NARROW_THRESHOLD = 15; // percent of track width; below this, put the date label outside the bar
+
     var rowsHtml = dated.slice()
       .sort(function(a, b){ return new Date(a.startDate) - new Date(b.startDate); })
       .map(function(t){
@@ -1203,17 +1269,69 @@
         var statusCls = t.status === 'progress' ? 'status-progress' : t.status === 'done' ? 'status-done' : '';
         var idxLabel = String(t.order).padStart(2, '0');
         var cleanTitle = escapeHtml(t.title.replace(/&amp;/g, '&'));
+        var dateRange = t.startDate + ' \u2192 ' + t.endDate;
+        var isNarrow = width < NARROW_THRESHOLD;
+        var barInner = isNarrow ? '' : dateRange;
+        var outsideLabel = isNarrow
+          ? '<span class="gantt-bar-outside-label" style="left:' + (left + width) + '%">' + dateRange + '</span>'
+          : '';
         return '<div class="gantt-row">' +
           '<div class="gantt-label" title="' + cleanTitle + '">' + idxLabel + '. ' + t.title + '</div>' +
           '<div class="gantt-track-area">' +
-            '<div class="gantt-bar ' + trackCls + ' ' + statusCls + '" style="left:' + left + '%; width:' + width + '%;" title="' + t.startDate + ' \u2192 ' + t.endDate + '">' + t.startDate + ' \u2192 ' + t.endDate + '</div>' +
+            '<div class="gantt-bar ' + trackCls + ' ' + statusCls + (isNarrow ? ' narrow' : '') + '" style="left:' + left + '%; width:' + width + '%;">' + barInner + '</div>' +
+            outsideLabel +
           '</div>' +
+          renderGanttTooltip(t) +
         '</div>';
       }).join('');
 
     mount.innerHTML = '<div class="gantt-wrap"><div class="gantt-scale">' + scaleHtml + todayHtml + '</div>' + rowsHtml + '</div>';
   }
   window.renderGantt = renderGantt;
+
+  // ---- Gantt filter chips (owner / team) ----
+  (function setupGanttFilters(){
+    var ownerEl = document.getElementById('ganttOwnerChips');
+    var memberEl = document.getElementById('ganttMemberChips');
+    if(!ownerEl || !memberEl) return;
+
+    ownerEl.innerHTML = ['shameel', 'bernard'].map(function(pid){
+      return '<button class="chip" data-gowner="' + pid + '">' +
+        '<span class="avatar owner xs" title="' + personName(pid) + '">' + INITIALS[pid] + '</span>' +
+        '<span>' + personName(pid) + '</span></button>';
+    }).join('');
+    memberEl.innerHTML = MEMBER_ORDER.map(function(pid){
+      return '<button class="chip" data-gmember="' + pid + '">' +
+        '<span class="avatar xs" title="' + personName(pid) + '">' + INITIALS[pid] + '</span>' +
+        '<span>' + personName(pid) + '</span></button>';
+    }).join('');
+
+    Array.prototype.slice.call(ownerEl.querySelectorAll('.chip')).forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var id = chip.getAttribute('data-gowner');
+        if(activeGanttOwners.has(id)){ activeGanttOwners.delete(id); chip.classList.remove('active'); }
+        else { activeGanttOwners.add(id); chip.classList.add('active'); }
+        renderGantt();
+      });
+    });
+    Array.prototype.slice.call(memberEl.querySelectorAll('.chip')).forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var id = chip.getAttribute('data-gmember');
+        if(activeGanttMembers.has(id)){ activeGanttMembers.delete(id); chip.classList.remove('active'); }
+        else { activeGanttMembers.add(id); chip.classList.add('active'); }
+        renderGantt();
+      });
+    });
+    var resetBtn = document.getElementById('ganttResetFilters');
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        activeGanttOwners.clear();
+        activeGanttMembers.clear();
+        Array.prototype.slice.call(document.querySelectorAll('#ganttOwnerChips .chip, #ganttMemberChips .chip')).forEach(function(c){ c.classList.remove('active'); });
+        renderGantt();
+      });
+    }
+  })();
 
   // Event delegation for the task editor mount (status dots + add buttons)
   var pendingCycles = new Set();
