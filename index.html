@@ -419,9 +419,21 @@
 
   .te-subtask{ display:flex; align-items:center; gap:10px; padding:8px 0; }
   .te-subtask-text{ font-size:13.5px; color:var(--ink); flex:1; }
+  .te-subtask-dates{ font-size:11px; color:var(--ink-faint); white-space:nowrap; }
   .te-subpoints{ margin-left:28px; padding-left:14px; border-left:2px solid var(--border-soft); }
   .te-subpoint{ display:flex; align-items:center; gap:9px; padding:6px 0; }
   .te-subpoint-text{ font-size:12.5px; color:var(--ink-dim); flex:1; }
+
+  .te-mini-btn{
+    background:none; border:none; color:var(--ink-faint); font-size:13px; cursor:pointer;
+    padding:2px 5px; line-height:1; flex-shrink:0; opacity:0.6; transition:opacity .12s ease, color .12s ease;
+  }
+  .te-mini-btn:hover{ opacity:1; color:var(--ink); }
+
+  .te-subtask-edit{
+    border:1px solid var(--border); border-radius:10px; background:var(--panel-2);
+    padding:14px 16px; margin:6px 0;
+  }
 
   .te-add-row{
     display:flex; gap:8px; margin-top:10px; opacity:0.5;
@@ -464,14 +476,20 @@
     white-space:nowrap; background:var(--stone); padding:1px 6px; border-radius:4px; font-weight:600;
     letter-spacing:0.02em;
   }
-  .gantt-row{ display:flex; align-items:center; min-height:44px; border-bottom:1px solid var(--border-soft); position:relative; }
+  .gantt-row{ display:flex; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--border-soft); position:relative; }
   .gantt-row:last-child{ border-bottom:none; }
   .gantt-row:hover{ background:var(--panel-2); }
   .gantt-label{
     width:200px; flex-shrink:0; font-size:12.5px; color:var(--ink); padding-right:14px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default;
   }
-  .gantt-track-area{ position:relative; flex:1; height:22px; min-width:480px; }
+  .gantt-track-area{ position:relative; flex:1; min-width:480px; }
+  .gantt-subbar{
+    position:absolute; height:8px; border-radius:4px;
+    border:1px solid var(--border); background:var(--panel-3); cursor:help;
+  }
+  .gantt-subbar.status-progress{ background:var(--info-bg); border-color:var(--info); }
+  .gantt-subbar.status-done{ background:var(--ok-bg); border-color:var(--ok); }
   .gantt-bar{
     position:absolute; top:2px; height:18px; border-radius:6px;
     border:1px solid var(--border); background:var(--panel-3);
@@ -1280,14 +1298,17 @@
            '<span class="status-ctrl-dot"></span>' + STATUS_LABEL[status] + '</span>';
   }
 
+  var editingSubKey = null; // taskId + ':' + subId of the subtask currently being edited
+
   function renderSubpoints(taskId, sub){
     var pts = sub.subpoints || [];
+    var canAct = !!currentPerson();
     var rows = pts.map(function(p){
-      var clickable = !!currentPerson();
-      var dot = statusControl(p.status, clickable, 'data-action="cycle-point" data-task="' + taskId + '" data-sub="' + sub.id + '" data-point="' + p.id + '"', 'point:' + taskId + ':' + sub.id + ':' + p.id);
-      return '<div class="te-subpoint">' + dot + '<span class="te-subpoint-text">' + escapeHtml(p.text) + '</span></div>';
+      var dot = statusControl(p.status, canAct, 'data-action="cycle-point" data-task="' + taskId + '" data-sub="' + sub.id + '" data-point="' + p.id + '"', 'point:' + taskId + ':' + sub.id + ':' + p.id);
+      var delBtn = canAct ? '<button type="button" class="te-mini-btn" data-action="delete-point" data-task="' + taskId + '" data-sub="' + sub.id + '" data-point="' + p.id + '" title="Delete sub-point">\u00d7</button>' : '';
+      return '<div class="te-subpoint">' + dot + '<span class="te-subpoint-text">' + escapeHtml(p.text) + '</span>' + delBtn + '</div>';
     }).join('');
-    var addRow = currentPerson() ? (
+    var addRow = canAct ? (
       '<div class="te-add-row te-add-subpoint-row">' +
         '<input type="text" placeholder="Add a sub-point…" data-newpoint-for="' + sub.id + '">' +
         '<button type="button" data-action="add-point" data-task="' + taskId + '" data-sub="' + sub.id + '">Add</button>' +
@@ -1297,10 +1318,31 @@
   }
 
   function renderEditorSubtask(taskId, sub){
-    var clickable = !!currentPerson();
-    var dot = statusControl(sub.status, clickable, 'data-action="cycle-sub" data-task="' + taskId + '" data-sub="' + sub.id + '"', 'sub:' + taskId + ':' + sub.id);
+    var canAct = !!currentPerson();
+    var key = taskId + ':' + sub.id;
+
+    if(editingSubKey === key){
+      return '' +
+        '<div class="te-subtask-edit">' +
+          '<input type="text" class="field-input" data-f="sub-text" value="' + escapeHtml(sub.text) + '">' +
+          '<div class="date-row" style="margin-top:8px;">' +
+            '<div><label class="field-label">Start</label><input type="date" class="field-input date-input" data-f="sub-start" value="' + (sub.startDate || '') + '"></div>' +
+            '<div><label class="field-label">End</label><input type="date" class="field-input date-input" data-f="sub-end" value="' + (sub.endDate || '') + '"></div>' +
+          '</div>' +
+          '<div class="te-edit-actions">' +
+            '<button type="button" class="te-edit-save" data-action="save-sub-edit" data-task="' + taskId + '" data-sub="' + sub.id + '">Save</button>' +
+            '<button type="button" class="te-edit-cancel" data-action="cancel-sub-edit" data-task="' + taskId + '" data-sub="' + sub.id + '">Cancel</button>' +
+            '<button type="button" class="comment-delete" style="margin-left:auto;" data-action="delete-sub" data-task="' + taskId + '" data-sub="' + sub.id + '">Delete subtask</button>' +
+          '</div>' +
+        '</div>' +
+        renderSubpoints(taskId, sub);
+    }
+
+    var dot = statusControl(sub.status, canAct, 'data-action="cycle-sub" data-task="' + taskId + '" data-sub="' + sub.id + '"', 'sub:' + taskId + ':' + sub.id);
+    var datesLine = (sub.startDate || sub.endDate) ? ('<span class="te-subtask-dates">' + (sub.startDate || '—') + ' \u2192 ' + (sub.endDate || '—') + '</span>') : '';
+    var editBtn = canAct ? '<button type="button" class="te-mini-btn" data-action="edit-sub" data-task="' + taskId + '" data-sub="' + sub.id + '" title="Edit subtask">\u270e</button>' : '';
     return '' +
-      '<div class="te-subtask">' + dot + '<span class="te-subtask-text">' + escapeHtml(sub.text) + '</span></div>' +
+      '<div class="te-subtask">' + dot + '<span class="te-subtask-text">' + escapeHtml(sub.text) + '</span>' + datesLine + editBtn + '</div>' +
       renderSubpoints(taskId, sub);
   }
 
@@ -1519,11 +1561,25 @@
         var outsideLabel = isNarrow
           ? '<span class="gantt-bar-outside-label" style="left:' + (left + width) + '%">' + dateRange + '</span>'
           : '';
+
+        // Any subtask with its own start/end date gets a thinner bar nested
+        // just below the main bar, on the same date scale.
+        var datedSubs = (t.subtasks || []).filter(function(sub){ return sub.startDate && sub.endDate; });
+        var subBarsHtml = datedSubs.map(function(sub, i){
+          var ss = new Date(sub.startDate + 'T00:00:00'), se = new Date(sub.endDate + 'T00:00:00');
+          var sLeft = pct(ss), sWidth = Math.max(pct(se) - pct(ss), 1);
+          var sStatusCls = sub.status === 'progress' ? 'status-progress' : sub.status === 'done' ? 'status-done' : '';
+          var sTitle = escapeHtml(sub.text) + ' (' + sub.startDate + ' \u2192 ' + sub.endDate + ')';
+          return '<div class="gantt-subbar ' + sStatusCls + '" style="left:' + sLeft + '%; width:' + sWidth + '%; top:' + (24 + i * 13) + 'px;" title="' + sTitle + '"></div>';
+        }).join('');
+        var trackHeight = 22 + datedSubs.length * 13;
+
         return '<div class="gantt-row" data-task-id="' + t.id + '" data-action="open-task" data-task="' + t.id + '" style="cursor:pointer;">' +
           '<div class="gantt-label" title="' + cleanTitle + '">' + t.title + '</div>' +
-          '<div class="gantt-track-area">' +
+          '<div class="gantt-track-area" style="height:' + trackHeight + 'px;">' +
             '<div class="gantt-bar ' + trackCls + ' ' + statusCls + (isNarrow ? ' narrow' : '') + '" style="left:' + left + '%; width:' + width + '%;">' + barInner + '</div>' +
             outsideLabel +
+            subBarsHtml +
           '</div>' +
         '</div>';
       }).join('');
@@ -1878,6 +1934,25 @@
       var subId = el.getAttribute('data-sub');
       var pInput = document.querySelector('[data-newpoint-for="' + subId + '"]');
       if(pInput && pInput.value.trim()) { addSubpoint(taskId, subId, pInput.value.trim()); pInput.value = ''; }
+    } else if(action === 'edit-sub'){
+      if(!currentPerson()) return;
+      editingSubKey = taskId + ':' + el.getAttribute('data-sub');
+      renderTaskEditor();
+    } else if(action === 'cancel-sub-edit'){
+      editingSubKey = null;
+      renderTaskEditor();
+    } else if(action === 'save-sub-edit'){
+      if(!currentPerson()) return;
+      saveSubtaskEdit(taskId, el.getAttribute('data-sub'), el);
+    } else if(action === 'delete-sub'){
+      if(!currentPerson()) return;
+      if(confirm('Delete this subtask and all its sub-points?')){
+        editingSubKey = null;
+        deleteSubtask(taskId, el.getAttribute('data-sub'));
+      }
+    } else if(action === 'delete-point'){
+      if(!currentPerson()) return;
+      deleteSubpoint(taskId, el.getAttribute('data-sub'), el.getAttribute('data-point'));
     } else if(action === 'toggle-edit'){
       if(!isManager()) return;
       editingTaskId = (editingTaskId === taskId) ? null : taskId;
@@ -1948,11 +2023,61 @@
 
   async function addSubtask(taskId, text){
     var ref = db.collection('mainTasks').doc(taskId);
-    var newSub = { id: 's_' + Date.now(), text: text, status: 'not_started', createdBy: currentPerson(), subpoints: [] };
+    var newSub = { id: 's_' + Date.now(), text: text, status: 'not_started', startDate: null, endDate: null, createdBy: currentPerson(), subpoints: [] };
     await db.runTransaction(async function(tx){
       var doc = await tx.get(ref);
       if(!doc.exists) return;
       var subtasks = (doc.data().subtasks || []).concat([newSub]);
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function saveSubtaskEdit(taskId, subId, saveBtn){
+    var container = saveBtn.closest('.te-subtask-edit');
+    if(!container) return;
+    var text = container.querySelector('[data-f="sub-text"]').value.trim();
+    if(!text) return;
+    var startDate = container.querySelector('[data-f="sub-start"]').value || null;
+    var endDate = container.querySelector('[data-f="sub-end"]').value || null;
+    var ref = db.collection('mainTasks').doc(taskId);
+    saveBtn.disabled = true;
+    try{
+      await db.runTransaction(async function(tx){
+        var doc = await tx.get(ref);
+        if(!doc.exists) return;
+        var subtasks = (doc.data().subtasks || []).map(function(s){
+          if(s.id === subId){ s.text = text; s.startDate = startDate; s.endDate = endDate; }
+          return s;
+        });
+        tx.update(ref, { subtasks: subtasks });
+      });
+      editingSubKey = null;
+    } catch(e){
+      console.error(e);
+    }
+    saveBtn.disabled = false;
+    renderTaskEditor();
+  }
+
+  async function deleteSubtask(taskId, subId){
+    var ref = db.collection('mainTasks').doc(taskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).filter(function(s){ return s.id !== subId; });
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function deleteSubpoint(taskId, subId, pointId){
+    var ref = db.collection('mainTasks').doc(taskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === subId){ s.subpoints = (s.subpoints || []).filter(function(p){ return p.id !== pointId; }); }
+        return s;
+      });
       tx.update(ref, { subtasks: subtasks });
     });
   }
