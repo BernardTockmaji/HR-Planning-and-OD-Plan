@@ -128,6 +128,19 @@
   .login-btn:hover{ border-color:var(--stone); background:var(--panel-3); }
   .login-error{ min-height:18px; font-size:12px; color:#d98080; margin-top:12px; }
 
+  .name-suggestions{
+    margin-top:8px; border-radius:10px; overflow:hidden; text-align:left;
+    border:1px solid transparent;
+  }
+  .name-suggestions:not(:empty){ border-color:var(--border); }
+  .name-suggestion-item{
+    display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer;
+    font-size:13px; color:var(--ink-dim); border-bottom:1px solid var(--border-soft);
+    background:var(--panel-2);
+  }
+  .name-suggestion-item:last-child{ border-bottom:none; }
+  .name-suggestion-item:hover, .name-suggestion-item.active-suggestion{ background:var(--panel-3); color:var(--ink); }
+
   .task-app{
     border:1px solid var(--border); border-radius:14px; background:var(--panel);
     padding:26px 28px;
@@ -591,10 +604,18 @@
     <div class="login-wrap">
     <div id="loginGate" class="login-card">
       <h2>Tasks Management</h2>
-      <p>Enter your 4-digit employee code to continue.</p>
-      <input id="codeInput" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••">
-      <button id="codeSubmit" class="login-btn" type="button">Continue</button>
+      <p>Start typing your name to continue.</p>
+      <input id="nameInput" class="field-input" type="text" autocomplete="off" placeholder="Your name">
+      <div id="nameSuggestions" class="name-suggestions"></div>
       <div id="loginError" class="login-error"></div>
+    </div>
+
+    <div id="codeVerify" class="login-card" style="display:none">
+      <h2>First time for <span id="verifyName" class="who"></span></h2>
+      <p>Enter the 4-digit code you were given, to verify it's you.</p>
+      <input id="verifyCodeInput" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Code">
+      <button id="verifyCodeSubmit" class="login-btn" type="button">Verify</button>
+      <div id="verifyCodeError" class="login-error"></div>
     </div>
 
     <div id="pinSetup" class="login-card" style="display:none">
@@ -762,13 +783,14 @@
   });
 
   // ---- Login screens ----
-  var loginGate = document.getElementById('loginGate');
-  var pinSetup  = document.getElementById('pinSetup');
-  var pinEntry  = document.getElementById('pinEntry');
-  var taskApp   = document.getElementById('taskApp');
+  var loginGate  = document.getElementById('loginGate');
+  var codeVerify = document.getElementById('codeVerify');
+  var pinSetup   = document.getElementById('pinSetup');
+  var pinEntry   = document.getElementById('pinEntry');
+  var taskApp    = document.getElementById('taskApp');
 
   function showOnly(el){
-    [loginGate, pinSetup, pinEntry, taskApp].forEach(function(s){ s.style.display = (s === el ? '' : 'none'); });
+    [loginGate, codeVerify, pinSetup, pinEntry, taskApp].forEach(function(s){ s.style.display = (s === el ? '' : 'none'); });
   }
 
   function setBusy(btn, busy, label){
@@ -777,6 +799,13 @@
   }
 
   var pendingCode = null;
+  var pendingPersonId = null;
+
+  // Reverse lookups built from the CODES / NAMES maps already defined above.
+  var ID_TO_CODE = {};
+  Object.keys(CODES).forEach(function(c){ ID_TO_CODE[CODES[c]] = c; });
+  var PEOPLE_LIST = Object.keys(NAMES).map(function(id){ return { id: id, name: NAMES[id] }; });
+  var LOGIN_INITIALS = {shameel:'SA', bernard:'BT', rahul:'RA', zahra:'ZA', arun:'AR', amulya:'AM', nihar:'NI', leen:'LE'};
 
   async function sha256(text){
     var enc = new TextEncoder().encode(text);
@@ -792,7 +821,11 @@
       enterTaskApp(active);
     } else {
       pendingCode = null;
-      document.getElementById('codeInput').value = '';
+      pendingPersonId = null;
+      var nameInputEl = document.getElementById('nameInput');
+      if(nameInputEl) nameInputEl.value = '';
+      var sugg = document.getElementById('nameSuggestions');
+      if(sugg) sugg.innerHTML = '';
       document.getElementById('loginError').textContent = '';
       showOnly(loginGate);
     }
@@ -805,33 +838,86 @@
     renderTaskEditor();
   }
 
-  document.getElementById('codeSubmit').addEventListener('click', async function(){
-    var btn = this;
-    var code = document.getElementById('codeInput').value.trim();
+  // Given a chosen person, route to PIN entry (returning user) or code
+  // verification (first time — no PIN set yet for this person).
+  async function proceedWithPerson(personId){
+    var code = ID_TO_CODE[personId];
     var errEl = document.getElementById('loginError');
-    if(!isFourDigits(code)){ errEl.textContent = 'Enter a 4-digit code.'; return; }
-    if(!CODES[code]){ errEl.textContent = 'Code not recognised.'; return; }
-    errEl.textContent = '';
+    pendingPersonId = personId;
     pendingCode = code;
-    setBusy(btn, true);
     try{
       var doc = await db.collection('pins').doc(code).get();
       if(doc.exists){
-        document.getElementById('entryName').textContent = NAMES[CODES[code]];
+        document.getElementById('entryName').textContent = NAMES[personId];
         document.getElementById('pinEnter').value = '';
         document.getElementById('pinEntryError').textContent = '';
         showOnly(pinEntry);
       } else {
-        document.getElementById('setupName').textContent = NAMES[CODES[code]];
-        document.getElementById('pinNew').value = '';
-        document.getElementById('pinConfirm').value = '';
-        document.getElementById('pinSetupError').textContent = '';
-        showOnly(pinSetup);
+        document.getElementById('verifyName').textContent = NAMES[personId];
+        document.getElementById('verifyCodeInput').value = '';
+        document.getElementById('verifyCodeError').textContent = '';
+        showOnly(codeVerify);
       }
     } catch(e){
       errEl.textContent = 'Could not reach the database. Check your connection and try again.';
     }
-    setBusy(btn, false, 'Continue');
+  }
+
+  // ---- Name autocomplete ----
+  var nameInput = document.getElementById('nameInput');
+  var nameSuggestions = document.getElementById('nameSuggestions');
+
+  function renderNameSuggestions(query){
+    var q = query.trim().toLowerCase();
+    if(!q){ nameSuggestions.innerHTML = ''; return; }
+    var starts = [], contains = [];
+    PEOPLE_LIST.forEach(function(p){
+      var n = p.name.toLowerCase();
+      if(n.indexOf(q) === 0) starts.push(p);
+      else if(n.indexOf(q) !== -1) contains.push(p);
+    });
+    var matches = starts.concat(contains);
+    if(!matches.length){ nameSuggestions.innerHTML = '<div class="name-suggestion-item" style="cursor:default;">No matching name</div>'; return; }
+    nameSuggestions.innerHTML = matches.map(function(p){
+      return '<div class="name-suggestion-item" data-person="' + p.id + '">' +
+        '<span class="avatar sm">' + LOGIN_INITIALS[p.id] + '</span><span>' + p.name + '</span></div>';
+    }).join('');
+  }
+
+  if(nameInput){
+    nameInput.addEventListener('input', function(){
+      document.getElementById('loginError').textContent = '';
+      renderNameSuggestions(nameInput.value);
+    });
+    nameInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){
+        var first = nameSuggestions.querySelector('.name-suggestion-item[data-person]');
+        if(first) first.click();
+      }
+    });
+    // mousedown (not click) so this fires before the input's blur hides the list
+    nameSuggestions.addEventListener('mousedown', function(e){
+      var item = e.target.closest('.name-suggestion-item[data-person]');
+      if(!item) return;
+      e.preventDefault();
+      nameInput.value = NAMES[item.getAttribute('data-person')];
+      nameSuggestions.innerHTML = '';
+      proceedWithPerson(item.getAttribute('data-person'));
+    });
+  }
+
+  document.getElementById('verifyCodeSubmit').addEventListener('click', async function(){
+    var btn = this;
+    var code = document.getElementById('verifyCodeInput').value.trim();
+    var errEl = document.getElementById('verifyCodeError');
+    if(!isFourDigits(code)){ errEl.textContent = 'Enter the 4-digit code.'; return; }
+    if(code !== ID_TO_CODE[pendingPersonId]){ errEl.textContent = "That code doesn't match this name."; return; }
+    errEl.textContent = '';
+    document.getElementById('setupName').textContent = NAMES[pendingPersonId];
+    document.getElementById('pinNew').value = '';
+    document.getElementById('pinConfirm').value = '';
+    document.getElementById('pinSetupError').textContent = '';
+    showOnly(pinSetup);
   });
 
   document.getElementById('pinSetSubmit').addEventListener('click', async function(){
@@ -887,11 +973,11 @@
     checkSession();
   });
 
-  // Enter-key convenience on all PIN/code inputs
-  ['codeInput','pinNew','pinConfirm','pinEnter'].forEach(function(id){
+  // Enter-key convenience on the remaining PIN inputs
+  ['verifyCodeInput','pinNew','pinConfirm','pinEnter'].forEach(function(id){
     document.getElementById(id).addEventListener('keydown', function(e){
       if(e.key === 'Enter'){
-        if(id === 'codeInput') document.getElementById('codeSubmit').click();
+        if(id === 'verifyCodeInput') document.getElementById('verifyCodeSubmit').click();
         else if(id === 'pinNew' || id === 'pinConfirm') document.getElementById('pinSetSubmit').click();
         else if(id === 'pinEnter') document.getElementById('pinEnterSubmit').click();
       }
