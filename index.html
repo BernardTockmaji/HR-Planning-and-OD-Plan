@@ -53,6 +53,7 @@
     font-family:var(--sans);
     -webkit-font-smoothing:antialiased;
     line-height:1.55;
+    overflow-x:hidden;
   }
   ::selection{ background:rgba(169,160,150,0.22); color:var(--ink); }
   a{ color:var(--ink); }
@@ -202,10 +203,14 @@
   .auth-bar:not(.signed-in-mode){
     border:none; background:none; padding:64px 0 24px;
     display:flex; justify-content:center;
+    width:100vw; position:relative; left:50%; margin-left:-50vw;
   }
   .auth-bar.signed-in-mode{
     border:1px solid var(--border); border-radius:14px; background:var(--panel);
     padding:24px 26px;
+  }
+  #signedOutNote{
+    width:100vw; position:relative; left:50%; margin-left:-50vw;
   }
 
   /* ---------- Filter bar ---------- */
