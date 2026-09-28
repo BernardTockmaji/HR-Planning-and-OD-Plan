@@ -622,6 +622,8 @@
       </div>
       <div class="task-app-body">
 
+        <button id="showAddTaskBtn" class="te-edit-btn" type="button" style="display:none; margin-bottom:20px;">+ Add new task</button>
+
         <div id="managerPanel" class="manager-panel" style="display:none">
           <h3>Add a main task</h3>
           <p class="panel-hint">Only Shameel and Bernard can create or reassign main tasks.</p>
@@ -800,6 +802,7 @@
     sessionStorage.setItem('activeCode', code);
     document.getElementById('currentUserName').textContent = NAMES[CODES[code]];
     showOnly(taskApp);
+    renderTaskEditor();
   }
 
   document.getElementById('codeSubmit').addEventListener('click', async function(){
@@ -909,6 +912,7 @@
 
   var allTasks = [];
   var editingTaskId = null;
+  var addTaskPanelOpen = false;
   var activeOwners = new Set();
   var activeMembers = new Set();
 
@@ -1172,7 +1176,13 @@
     mount.innerHTML = allTasks.length ? allTasks.map(renderEditorCard).join('') : '<p class="te-empty">No main tasks yet.</p>';
 
     var mgrPanel = document.getElementById('managerPanel');
-    if(mgrPanel) mgrPanel.style.display = isManager() ? '' : 'none';
+    var showBtn = document.getElementById('showAddTaskBtn');
+    var manager = isManager();
+    if(showBtn){
+      showBtn.style.display = manager ? '' : 'none';
+      showBtn.textContent = addTaskPanelOpen ? 'Close' : '+ Add new task';
+    }
+    if(mgrPanel) mgrPanel.style.display = (manager && addTaskPanelOpen) ? '' : 'none';
   }
 
   // ---------------------------------------------------------------------
@@ -1539,6 +1549,14 @@
   }
   populatePeopleCheckboxes();
 
+  var showAddTaskBtn = document.getElementById('showAddTaskBtn');
+  if(showAddTaskBtn){
+    showAddTaskBtn.addEventListener('click', function(){
+      addTaskPanelOpen = !addTaskPanelOpen;
+      renderTaskEditor();
+    });
+  }
+
   var mtSubmit = document.getElementById('mtSubmit');
   if(mtSubmit){
     mtSubmit.addEventListener('click', async function(){
@@ -1572,6 +1590,7 @@
         document.getElementById('mtStart').value = '';
         document.getElementById('mtEnd').value = '';
         Array.prototype.slice.call(document.querySelectorAll('#mtOwners input, #mtTeam input')).forEach(function(i){ i.checked = false; });
+        addTaskPanelOpen = false;
       } catch(e){
         errEl.textContent = 'Could not save. Check your connection and try again.';
       }
@@ -1591,10 +1610,7 @@
   if(tasksTabBtn){ tasksTabBtn.addEventListener('click', function(){ renderTaskEditor(); }); }
   var logoutBtnEl = document.getElementById('logoutBtn');
   if(logoutBtnEl){ logoutBtnEl.addEventListener('click', function(){ renderTaskEditor(); }); }
-  var pinEnterBtn = document.getElementById('pinEnterSubmit');
-  if(pinEnterBtn){ pinEnterBtn.addEventListener('click', function(){ setTimeout(renderTaskEditor, 300); }); }
-  var pinSetBtn = document.getElementById('pinSetSubmit');
-  if(pinSetBtn){ pinSetBtn.addEventListener('click', function(){ setTimeout(renderTaskEditor, 300); }); }
+
 
   db.collection('mainTasks').orderBy('order').onSnapshot(function(snapshot){
     allTasks = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
