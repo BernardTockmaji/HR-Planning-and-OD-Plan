@@ -835,7 +835,7 @@
     sessionStorage.setItem('activeCode', code);
     document.getElementById('currentUserName').textContent = NAMES[CODES[code]];
     showOnly(taskApp);
-    renderTaskEditor();
+    if(typeof window.renderTaskEditor === 'function'){ window.renderTaskEditor(); }
   }
 
   // Given a chosen person, route to PIN entry (returning user) or code
@@ -1412,6 +1412,7 @@
     tip.style.top = top + 'px';
   }
   window.renderGantt = renderGantt;
+  window.renderTaskEditor = renderTaskEditor;
 
   // ---- Gantt filter chips (owner / team) ----
   (function setupGanttFilters(){
