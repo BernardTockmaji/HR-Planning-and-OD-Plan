@@ -244,7 +244,7 @@
   .expand-controls{ display:flex; gap:8px; margin-left:auto; }
   .expand-controls .chip-reset{ font-size:11.5px; padding:6px 13px; }
   .item-top.clickable{ cursor:pointer; }
-  .item-chevron{ display:inline-block; width:10px; color:var(--ink-faint); font-size:11px; flex-shrink:0; }
+  .item-chevron{ display:inline-block; width:12px; color:var(--ink-faint); font-size:14px; font-weight:600; flex-shrink:0; text-align:center; }
   .legend-item{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); }
   .legend-dot{ width:7px; height:7px; border-radius:50%; }
   .legend-dot.dev{ background:var(--stone); }
@@ -555,10 +555,6 @@
       <div class="hero-eyebrow">HR Planning &amp; Organizational Development</div>
       <h1>Project<br>Management.</h1>
       <p class="lede">A structured, continuously updated roadmap across HR Projects and Organizational Development — every initiative carried from requirement to closure.</p>
-      <div class="hero-tags">
-        <span class="htag"><b id="heroCount">—</b>&nbsp;initiatives</span>
-        <span class="htag"><b>2</b>&nbsp;divisions</span>
-      </div>
     </section>
 
     <section class="section">
@@ -1043,6 +1039,7 @@
   var allTasks = [];
   var editingTaskId = null;
   var addTaskPanelOpen = false;
+  var expandedEditorIds = new Set();
   var activeOwners = new Set();
   var activeMembers = new Set();
 
@@ -1126,7 +1123,7 @@
     return '' +
       '<div class="item">' +
         '<div class="item-top clickable" data-action="toggle-item" data-item-id="' + t.id + '">' +
-          '<div class="item-id"><span class="item-chevron">' + (isOpen ? '▾' : '▸') + '</span><span class="item-index">' + idxLabel + '</span><span class="item-title">' + t.title + '</span></div>' +
+          '<div class="item-id"><span class="item-chevron">' + (isOpen ? '\u2212' : '+') + '</span><span class="item-index">' + idxLabel + '</span><span class="item-title">' + t.title + '</span></div>' +
           '<div class="item-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
           (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') + '</div>' +
         '</div>' +
@@ -1286,6 +1283,7 @@
     var badgeCls = t.track === 'dev' ? 'track-dev' : 'track-od';
     var idxLabel = String(t.order).padStart(2, '0');
     var manager = isManager();
+    var isOpen = expandedEditorIds.has(t.id) || editingTaskId === t.id;
     var mainDot = statusControl(t.status, manager, 'data-action="cycle-main" data-task="' + t.id + '"', 'main:' + t.id);
     var ownerChips = (t.owners || []).map(personChip).join('');
     var teamChips = (t.team || []).map(personChip).join('');
@@ -1302,24 +1300,28 @@
       (editingTaskId === t.id ? 'Close' : 'Edit') + '</button>'
     ) : '';
     var editPanel = (manager && editingTaskId === t.id) ? renderEditPanel(t) : '';
+    var chevron = '<span class="item-chevron" data-action="toggle-card" data-task="' + t.id + '" style="cursor:pointer;">' + (isOpen ? '\u2212' : '+') + '</span>';
+    var bodyHtml = isOpen ? (
+      '<div class="assign-row">' +
+        '<div class="assign-group"><span class="assign-label">Owner</span><div class="people-list">' + ownerChips + '</div></div>' +
+        '<div class="assign-group"><span class="assign-label">Team</span><div class="people-list">' + teamChips + '</div></div>' +
+      '</div>' +
+      '<div class="te-meta">' + (t.startDate || '—') + ' → ' + (t.endDate || '—') + '</div>' +
+      noteHtml +
+      editPanel +
+      '<div class="te-divider"></div>' +
+      subtasksHtml +
+      addSubtaskRow
+    ) : '';
     return '' +
       '<div class="te-card">' +
         '<div class="te-top">' +
-          '<div class="te-title-row">' + mainDot + '<span class="te-title">' + idxLabel + '. ' + t.title + '</span></div>' +
+          '<div class="te-title-row" data-action="toggle-card" data-task="' + t.id + '" style="cursor:pointer;">' + chevron + mainDot + '<span class="te-title">' + idxLabel + '. ' + t.title + '</span></div>' +
           '<div class="te-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
           (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') +
           editBtn + '</div>' +
         '</div>' +
-        '<div class="assign-row">' +
-          '<div class="assign-group"><span class="assign-label">Owner</span><div class="people-list">' + ownerChips + '</div></div>' +
-          '<div class="assign-group"><span class="assign-label">Team</span><div class="people-list">' + teamChips + '</div></div>' +
-        '</div>' +
-        '<div class="te-meta">' + (t.startDate || '—') + ' → ' + (t.endDate || '—') + '</div>' +
-        noteHtml +
-        editPanel +
-        '<div class="te-divider"></div>' +
-        subtasksHtml +
-        addSubtaskRow +
+        bodyHtml +
       '</div>';
   }
 
@@ -1623,6 +1625,11 @@
       if(expandedIds.has(itemId)) expandedIds.delete(itemId);
       else expandedIds.add(itemId);
       renderHome();
+    } else if(action === 'toggle-card'){
+      if(editingTaskId === taskId){ return; } // already forced open while editing
+      if(expandedEditorIds.has(taskId)) expandedEditorIds.delete(taskId);
+      else expandedEditorIds.add(taskId);
+      renderTaskEditor();
     } else if(action === 'cycle-main'){
       if(!isManager()) return;
       guardedCycle(el.getAttribute('data-guard-key'), el, function(){ return cycleMainStatus(taskId); });
