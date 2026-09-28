@@ -819,6 +819,10 @@
 
     <section class="section" style="padding-top:0;">
 
+      <p id="ganttSignedOutNote" class="te-empty">Sign in on Home to view project timelines.</p>
+
+      <div id="ganttAppContent" style="display:none">
+
       <div class="filter-bar">
         <div class="filter-row">
           <span class="filter-label">Owner</span>
@@ -850,6 +854,8 @@
 
       <div id="kanbanPane" style="display:none">
         <div id="kanbanMount"></div>
+      </div>
+
       </div>
     </section>
 
@@ -1469,6 +1475,13 @@
   }
 
   function renderGantt(){
+    var appContent = document.getElementById('ganttAppContent');
+    var signedOutNote = document.getElementById('ganttSignedOutNote');
+    var signedIn = !!currentPerson();
+    if(appContent) appContent.style.display = signedIn ? '' : 'none';
+    if(signedOutNote) signedOutNote.style.display = signedIn ? 'none' : '';
+    if(!signedIn) return;
+
     var mount = document.getElementById('ganttMount');
     var noteEl = document.getElementById('ganttUndatedNote');
     var countEl = document.getElementById('ganttFilterCount');
@@ -1636,6 +1649,7 @@
   }
 
   function renderKanban(){
+    if(!currentPerson()) return;
     var mount = document.getElementById('kanbanMount');
     if(!mount) return;
 
