@@ -57,7 +57,7 @@
   ::selection{ background:rgba(169,160,150,0.22); color:var(--ink); }
   a{ color:var(--ink); }
 
-  .wrap{ max-width:1220px; margin:0; padding:0 48px 120px; }
+  .wrap{ max-width:1640px; margin:0; padding:0 48px 120px; }
 
   /* ---------- Top bar ---------- */
   .topbar{
@@ -68,7 +68,7 @@
     border-bottom:1px solid var(--border-soft);
   }
   .topbar-inner{
-    max-width:1220px; margin:0; padding:16px 48px;
+    max-width:1640px; margin:0; padding:16px 48px;
     display:flex; align-items:center; justify-content:space-between; gap:16px;
   }
   .topbar img{ height:20px; width:auto; display:block; }
@@ -87,7 +87,7 @@
     border-bottom:1px solid var(--border-soft);
   }
   .tabbar-inner{
-    max-width:1220px; margin:0; padding:0 48px;
+    max-width:1640px; margin:0; padding:0 48px;
     display:flex; gap:6px;
   }
   .tab-btn{
@@ -254,8 +254,9 @@
 
   .item{
     border:1px solid var(--border); border-radius:14px; background:var(--panel);
-    margin-bottom:16px; padding:28px 30px; transition:opacity .2s ease, transform .2s ease;
+    margin-bottom:16px; padding:28px 30px; transition:opacity .2s ease, transform .2s ease, padding .15s ease;
   }
+  .item.collapsed{ padding:18px 24px; }
   .item.hidden{ display:none; }
   .item-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:4px; flex-wrap:wrap; }
   .item-id{ display:flex; align-items:baseline; gap:16px; }
@@ -389,7 +390,8 @@
   .manager-submit{ margin-top:20px; }
 
   /* ---------- Task editor (Tasks Management, live) ---------- */
-  .te-card{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:26px 28px; margin-bottom:18px; }
+  .te-card{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:26px 28px; margin-bottom:18px; transition:padding .15s ease; }
+  .te-card.collapsed{ padding:16px 22px; }
   .te-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
   .te-title-row{ display:flex; align-items:center; gap:12px; }
   .te-title{ font-family:var(--serif); font-weight:500; font-size:19px; }
@@ -1198,7 +1200,7 @@
       noteHtml
     ) : '';
     return '' +
-      '<div class="item">' +
+      '<div class="item' + (isOpen ? '' : ' collapsed') + '">' +
         '<div class="item-top clickable" data-action="toggle-item" data-item-id="' + t.id + '">' +
           '<div class="item-id"><span class="item-chevron">' + (isOpen ? '\u2212' : '+') + '</span><span class="item-index">' + idxLabel + '</span><span class="item-title">' + t.title + '</span></div>' +
           '<div class="item-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
@@ -1392,7 +1394,7 @@
       addSubtaskRow
     ) : '';
     return '' +
-      '<div class="te-card">' +
+      '<div class="te-card' + (isOpen ? '' : ' collapsed') + '">' +
         '<div class="te-top">' +
           '<div class="te-title-row" data-action="toggle-card" data-task="' + t.id + '" style="cursor:pointer;">' + chevron + mainDot + '<span class="te-title">' + idxLabel + '. ' + t.title + '</span></div>' +
           '<div class="te-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
