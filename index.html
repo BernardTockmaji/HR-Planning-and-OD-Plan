@@ -198,9 +198,14 @@
   }
 
   /* ---------- Auth bar (sign in / signed-in state, on Home) ---------- */
-  .auth-bar{
+  .auth-bar{ margin-bottom:24px; }
+  .auth-bar:not(.signed-in-mode){
+    border:none; background:none; padding:64px 0 24px;
+    display:flex; justify-content:center;
+  }
+  .auth-bar.signed-in-mode{
     border:1px solid var(--border); border-radius:14px; background:var(--panel);
-    padding:24px 26px; margin-bottom:24px;
+    padding:24px 26px;
   }
 
   /* ---------- Filter bar ---------- */
@@ -626,43 +631,6 @@
   <div id="view-home" class="view active">
   <div class="wrap">
 
-    <section class="hero">
-      <div class="hero-eyebrow">HR Planning &amp; Organizational Development</div>
-      <h1>Project<br>Management.</h1>
-      <p class="lede">A structured, continuously updated roadmap across HR Projects and Organizational Development — every initiative carried from requirement to closure.</p>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <h2>Structure</h2>
-        <span class="section-num">— i.</span>
-      </div>
-      <div class="divisions">
-        <div class="division">
-          <h3>HR Projects</h3>
-          <p>Owns HRMS system development, audits, requirement documentation, and the enforcement of IPMP and MPP cycles across the organisation.</p>
-          <div class="lead-line">
-            <span class="avatar owner xs" title="Bernard Tockmaji">BT</span>
-            <span>Led by Bernard Tockmaji, reporting to Shameel Ahmed</span>
-          </div>
-        </div>
-        <div class="division">
-          <h3>Organizational Development</h3>
-          <p>Owns SOPs, salary structure and banding, job architecture, and the frameworks that govern how the organisation is designed and documented.</p>
-          <div class="lead-line">
-            <span class="avatar owner xs" title="Shameel Ahmed">SA</span>
-            <span>Led by Shameel Ahmed, who also oversees delivery of HR Projects</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <h2>Roadmap</h2>
-        <span class="section-note">Filter by owner or by the people working on each initiative.</span>
-      </div>
-
       <div class="auth-bar">
         <div class="login-wrap" id="loginWrapInline" style="padding-top:0; max-width:none; margin:0;">
         <div id="loginGate" class="login-card" style="max-width:420px; margin:0;">
@@ -757,9 +725,47 @@
         </div>
       </div>
 
-      <p id="roadmapSignedOutNote" class="te-empty">Sign in above to view and manage the initiatives.</p>
+    <p id="signedOutNote" class="te-empty">Sign in above to continue.</p>
 
-      <div id="roadmapContent" style="display:none">
+    <div id="appContent" style="display:none">
+
+    <section class="hero">
+      <div class="hero-eyebrow">HR Planning &amp; Organizational Development</div>
+      <h1>Project<br>Management.</h1>
+      <p class="lede">A structured, continuously updated roadmap across HR Projects and Organizational Development — every initiative carried from requirement to closure.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Structure</h2>
+        <span class="section-num">— i.</span>
+      </div>
+      <div class="divisions">
+        <div class="division">
+          <h3>HR Projects</h3>
+          <p>Owns HRMS system development, audits, requirement documentation, and the enforcement of IPMP and MPP cycles across the organisation.</p>
+          <div class="lead-line">
+            <span class="avatar owner xs" title="Bernard Tockmaji">BT</span>
+            <span>Led by Bernard Tockmaji, reporting to Shameel Ahmed</span>
+          </div>
+        </div>
+        <div class="division">
+          <h3>Organizational Development</h3>
+          <p>Owns SOPs, salary structure and banding, job architecture, and the frameworks that govern how the organisation is designed and documented.</p>
+          <div class="lead-line">
+            <span class="avatar owner xs" title="Shameel Ahmed">SA</span>
+            <span>Led by Shameel Ahmed, who also oversees delivery of HR Projects</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Roadmap</h2>
+        <span class="section-note">Filter by owner or by the people working on each initiative.</span>
+      </div>
+
       <div class="filter-bar">
         <div class="filter-row">
           <span class="filter-label">Owner</span>
@@ -785,7 +791,6 @@
       </div>
 
       <div id="itemList"></div>
-      </div>
     </section>
 
     <section class="section">
@@ -797,6 +802,8 @@
         <div class="dep-row"><div class="dep-desc">BRD leads to FRD, which leads to Development.</div><div class="dep-flow">01 → 02 → 08</div></div><div class="dep-row"><div class="dep-desc">IPMP / MPP system enhancements complete before the IPMP &amp; MPP exercise runs.</div><div class="dep-flow">8c, 8d → 07</div></div><div class="dep-row"><div class="dep-desc">Jobs &amp; Titles cleansing completes before Salary Structure reflects in HRMS.</div><div class="dep-flow">11 → 10</div></div><div class="dep-row"><div class="dep-desc">Gaps identified in the SOP exercise feed Change Request Management.</div><div class="dep-flow">09 → 06</div></div><div class="dep-row"><div class="dep-desc">New team handover stays in sync with active development work.</div><div class="dep-flow">05 ↔ 08</div></div>
       </div>
     </section>
+
+    </div>
 
   </div>
   </div>
@@ -908,6 +915,8 @@
 
   function showOnly(el){
     [loginGate, codeVerify, pinSetup, pinEntry, taskApp].forEach(function(s){ s.style.display = (s === el ? '' : 'none'); });
+    var authBar = document.querySelector('.auth-bar');
+    if(authBar) authBar.classList.toggle('signed-in-mode', el === taskApp);
   }
 
   function setBusy(btn, busy, label){
@@ -1202,15 +1211,15 @@
   function renderHome(){
     var container = document.getElementById('itemList');
     var countEl = document.getElementById('filterCount');
-    var roadmapContent = document.getElementById('roadmapContent');
-    var signedOutNote = document.getElementById('roadmapSignedOutNote');
+    var appContent = document.getElementById('appContent');
+    var signedOutNote = document.getElementById('signedOutNote');
     if(!container) return;
 
     var heroCountEl = document.getElementById('heroCount');
     if(heroCountEl) heroCountEl.textContent = allTasks.length;
 
     var signedIn = !!currentPerson();
-    if(roadmapContent) roadmapContent.style.display = signedIn ? '' : 'none';
+    if(appContent) appContent.style.display = signedIn ? '' : 'none';
     if(signedOutNote) signedOutNote.style.display = signedIn ? 'none' : '';
 
     if(signedIn){
