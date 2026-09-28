@@ -154,7 +154,7 @@
   .placeholder-note{ color:var(--ink-faint); font-size:13px; line-height:1.6; }
 
   /* ---------- Hero ---------- */
-  .hero{ padding:92px 0 52px; text-align:left; animation:rise 0.7s ease-out both; }
+  .hero{ padding:92px 0 52px; text-align:left; max-width:760px; animation:rise 0.7s ease-out both; }
   @keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
   .hero-eyebrow{
     display:inline-flex; align-items:center; gap:10px;
@@ -195,6 +195,12 @@
     font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--stone);
     border-top:1px solid var(--border); padding-top:14px; display:flex; justify-content:space-between;
     margin-top:auto;
+  }
+
+  /* ---------- Auth bar (sign in / signed-in state, on Home) ---------- */
+  .auth-bar{
+    border:1px solid var(--border); border-radius:14px; background:var(--panel);
+    padding:24px 26px; margin-bottom:24px;
   }
 
   /* ---------- Filter bar ---------- */
@@ -425,8 +431,8 @@
   .te-subpoint-text{ font-size:12.5px; color:var(--ink-dim); flex:1; }
 
   .te-mini-btn{
-    background:none; border:none; color:var(--ink-faint); font-size:13px; cursor:pointer;
-    padding:2px 5px; line-height:1; flex-shrink:0; opacity:0.6; transition:opacity .12s ease, color .12s ease;
+    background:none; border:none; color:var(--ink-dim); font-size:13px; cursor:pointer;
+    padding:2px 5px; line-height:1; flex-shrink:0; opacity:0.85; transition:opacity .12s ease, color .12s ease;
   }
   .te-mini-btn:hover{ opacity:1; color:var(--ink); }
 
@@ -613,7 +619,6 @@
   <div class="tabbar">
     <div class="tabbar-inner">
       <button class="tab-btn active" data-view="home" type="button">Home</button>
-      <button class="tab-btn" data-view="tasks" type="button">Tasks Management</button>
       <button class="tab-btn" data-view="gantt" type="button">Project Timelines</button>
     </div>
   </div>
@@ -658,6 +663,103 @@
         <span class="section-note">Filter by owner or by the people working on each initiative.</span>
       </div>
 
+      <div class="auth-bar">
+        <div class="login-wrap" id="loginWrapInline" style="padding-top:0; max-width:none; margin:0;">
+        <div id="loginGate" class="login-card" style="max-width:420px; margin:0;">
+          <h2>Sign in to edit</h2>
+          <p>Start typing your name to continue.</p>
+          <input id="nameInput" class="field-input" type="text" autocomplete="off" placeholder="Your name">
+          <div id="nameSuggestions" class="name-suggestions"></div>
+          <div id="loginError" class="login-error"></div>
+        </div>
+
+        <div id="codeVerify" class="login-card" style="display:none; max-width:420px; margin:0;">
+          <h2>First time for <span id="verifyName" class="who"></span></h2>
+          <p>Enter the 4-digit code you were given, to verify it's you.</p>
+          <input id="verifyCodeInput" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Code">
+          <button id="verifyCodeSubmit" class="login-btn" type="button">Verify</button>
+          <div id="verifyCodeError" class="login-error"></div>
+        </div>
+
+        <div id="pinSetup" class="login-card" style="display:none; max-width:420px; margin:0;">
+          <h2>Set your PIN</h2>
+          <p>First time here for <span id="setupName" class="who"></span>. Choose a 4-digit PIN — you'll enter this every time you come back, on this device.</p>
+          <input id="pinNew" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="New PIN">
+          <input id="pinConfirm" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Confirm PIN">
+          <button id="pinSetSubmit" class="login-btn" type="button">Set PIN &amp; continue</button>
+          <div id="pinSetupError" class="login-error"></div>
+        </div>
+
+        <div id="pinEntry" class="login-card" style="display:none; max-width:420px; margin:0;">
+          <h2>Welcome back, <span id="entryName" class="who"></span></h2>
+          <p>Enter your PIN to continue.</p>
+          <input id="pinEnter" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="PIN">
+          <button id="pinEnterSubmit" class="login-btn" type="button">Unlock</button>
+          <div id="pinEntryError" class="login-error"></div>
+        </div>
+        </div>
+
+        <div id="taskApp" class="task-app" style="display:none">
+          <div class="task-app-header">
+            <span>Signed in as <b id="currentUserName"></b></span>
+            <button id="logoutBtn" class="chip-reset" type="button">Sign out</button>
+          </div>
+          <div class="task-app-body">
+            <button id="showAddTaskBtn" class="te-edit-btn" type="button" style="display:none;">+ Add new task</button>
+
+            <div id="managerPanel" class="manager-panel" style="display:none">
+              <h3>Add a main task</h3>
+              <p class="panel-hint">Only Shameel and Bernard can create or reassign main tasks.</p>
+
+              <label class="field-label">Title</label>
+              <input id="mtTitle" class="field-input" type="text" placeholder="e.g. Vendor Contract Renewal">
+
+              <label class="field-label">Track</label>
+              <div class="radio-row">
+                <label class="radio-pill"><input type="radio" name="mtTrack" value="dev" checked> HR Projects</label>
+                <label class="radio-pill"><input type="radio" name="mtTrack" value="od"> Organizational Development</label>
+              </div>
+
+              <label class="field-label">Tag <span class="opt">(optional short label)</span></label>
+              <input id="mtTag" class="field-input" type="text" placeholder="e.g. Build, Reconciliation, Two-Track">
+
+              <label class="field-label">Owner(s)</label>
+              <div class="checkbox-row" id="mtOwners"></div>
+
+              <label class="field-label">Team</label>
+              <div class="checkbox-row" id="mtTeam"></div>
+
+              <label class="field-label">Status</label>
+              <div class="radio-row">
+                <label class="radio-pill"><input type="radio" name="mtStatus" value="not_started" checked> Not started</label>
+                <label class="radio-pill"><input type="radio" name="mtStatus" value="progress"> In progress</label>
+                <label class="radio-pill"><input type="radio" name="mtStatus" value="done"> Completed</label>
+              </div>
+
+              <div class="date-row">
+                <div>
+                  <label class="field-label">Start date</label>
+                  <input id="mtStart" class="field-input date-input" type="date">
+                </div>
+                <div>
+                  <label class="field-label">End date</label>
+                  <input id="mtEnd" class="field-input date-input" type="date">
+                </div>
+              </div>
+
+              <label class="field-label">Note <span class="opt">(optional)</span></label>
+              <textarea id="mtNote" class="field-input field-textarea" placeholder="Any context worth flagging on the card"></textarea>
+
+              <button id="mtSubmit" class="login-btn manager-submit" type="button">Add main task</button>
+              <div id="mtError" class="login-error"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p id="roadmapSignedOutNote" class="te-empty">Sign in above to view and manage the initiatives.</p>
+
+      <div id="roadmapContent" style="display:none">
       <div class="filter-bar">
         <div class="filter-row">
           <span class="filter-label">Owner</span>
@@ -683,6 +785,7 @@
       </div>
 
       <div id="itemList"></div>
+      </div>
     </section>
 
     <section class="section">
@@ -694,108 +797,6 @@
         <div class="dep-row"><div class="dep-desc">BRD leads to FRD, which leads to Development.</div><div class="dep-flow">01 → 02 → 08</div></div><div class="dep-row"><div class="dep-desc">IPMP / MPP system enhancements complete before the IPMP &amp; MPP exercise runs.</div><div class="dep-flow">8c, 8d → 07</div></div><div class="dep-row"><div class="dep-desc">Jobs &amp; Titles cleansing completes before Salary Structure reflects in HRMS.</div><div class="dep-flow">11 → 10</div></div><div class="dep-row"><div class="dep-desc">Gaps identified in the SOP exercise feed Change Request Management.</div><div class="dep-flow">09 → 06</div></div><div class="dep-row"><div class="dep-desc">New team handover stays in sync with active development work.</div><div class="dep-flow">05 ↔ 08</div></div>
       </div>
     </section>
-
-  </div>
-  </div>
-
-  <div id="view-tasks" class="view">
-  <div class="wrap">
-
-    <div class="login-wrap">
-    <div id="loginGate" class="login-card">
-      <h2>Tasks Management</h2>
-      <p>Start typing your name to continue.</p>
-      <input id="nameInput" class="field-input" type="text" autocomplete="off" placeholder="Your name">
-      <div id="nameSuggestions" class="name-suggestions"></div>
-      <div id="loginError" class="login-error"></div>
-    </div>
-
-    <div id="codeVerify" class="login-card" style="display:none">
-      <h2>First time for <span id="verifyName" class="who"></span></h2>
-      <p>Enter the 4-digit code you were given, to verify it's you.</p>
-      <input id="verifyCodeInput" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Code">
-      <button id="verifyCodeSubmit" class="login-btn" type="button">Verify</button>
-      <div id="verifyCodeError" class="login-error"></div>
-    </div>
-
-    <div id="pinSetup" class="login-card" style="display:none">
-      <h2>Set your PIN</h2>
-      <p>First time here for <span id="setupName" class="who"></span>. Choose a 4-digit PIN — you'll enter this every time you come back, on this device.</p>
-      <input id="pinNew" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="New PIN">
-      <input id="pinConfirm" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Confirm PIN">
-      <button id="pinSetSubmit" class="login-btn" type="button">Set PIN &amp; continue</button>
-      <div id="pinSetupError" class="login-error"></div>
-    </div>
-
-    <div id="pinEntry" class="login-card" style="display:none">
-      <h2>Welcome back, <span id="entryName" class="who"></span></h2>
-      <p>Enter your PIN to continue.</p>
-      <input id="pinEnter" class="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="PIN">
-      <button id="pinEnterSubmit" class="login-btn" type="button">Unlock</button>
-      <div id="pinEntryError" class="login-error"></div>
-    </div>
-    </div>
-
-    <div id="taskApp" class="task-app" style="display:none">
-      <div class="task-app-header">
-        <span>Signed in as <b id="currentUserName"></b></span>
-        <button id="logoutBtn" class="chip-reset" type="button">Sign out</button>
-      </div>
-      <div class="task-app-body">
-
-        <button id="showAddTaskBtn" class="te-edit-btn" type="button" style="display:none; margin-bottom:20px;">+ Add new task</button>
-
-        <div id="managerPanel" class="manager-panel" style="display:none">
-          <h3>Add a main task</h3>
-          <p class="panel-hint">Only Shameel and Bernard can create or reassign main tasks.</p>
-
-          <label class="field-label">Title</label>
-          <input id="mtTitle" class="field-input" type="text" placeholder="e.g. Vendor Contract Renewal">
-
-          <label class="field-label">Track</label>
-          <div class="radio-row">
-            <label class="radio-pill"><input type="radio" name="mtTrack" value="dev" checked> HR Projects</label>
-            <label class="radio-pill"><input type="radio" name="mtTrack" value="od"> Organizational Development</label>
-          </div>
-
-          <label class="field-label">Tag <span class="opt">(optional short label)</span></label>
-          <input id="mtTag" class="field-input" type="text" placeholder="e.g. Build, Reconciliation, Two-Track">
-
-          <label class="field-label">Owner(s)</label>
-          <div class="checkbox-row" id="mtOwners"></div>
-
-          <label class="field-label">Team</label>
-          <div class="checkbox-row" id="mtTeam"></div>
-
-          <label class="field-label">Status</label>
-          <div class="radio-row">
-            <label class="radio-pill"><input type="radio" name="mtStatus" value="not_started" checked> Not started</label>
-            <label class="radio-pill"><input type="radio" name="mtStatus" value="progress"> In progress</label>
-            <label class="radio-pill"><input type="radio" name="mtStatus" value="done"> Completed</label>
-          </div>
-
-          <div class="date-row">
-            <div>
-              <label class="field-label">Start date</label>
-              <input id="mtStart" class="field-input date-input" type="date">
-            </div>
-            <div>
-              <label class="field-label">End date</label>
-              <input id="mtEnd" class="field-input date-input" type="date">
-            </div>
-          </div>
-
-          <label class="field-label">Note <span class="opt">(optional)</span></label>
-          <textarea id="mtNote" class="field-input field-textarea" placeholder="Any context worth flagging on the card"></textarea>
-
-          <button id="mtSubmit" class="login-btn manager-submit" type="button">Add main task</button>
-          <div id="mtError" class="login-error"></div>
-        </div>
-
-        <div id="taskEditorMount"></div>
-
-      </div>
-    </div>
 
   </div>
   </div>
@@ -886,12 +887,11 @@
 
   // ---- Tab switching ----
   var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
-  var views = { home: document.getElementById('view-home'), tasks: document.getElementById('view-tasks'), gantt: document.getElementById('view-gantt') };
+  var views = { home: document.getElementById('view-home'), gantt: document.getElementById('view-gantt') };
 
   function activateTab(name){
     tabBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-view') === name); });
     Object.keys(views).forEach(function(k){ views[k].classList.toggle('active', k === name); });
-    if(name === 'tasks'){ checkSession(); }
     if(name === 'gantt' && typeof window.renderGantt === 'function'){ window.renderGantt(); }
     if(name === 'gantt' && typeof window.renderKanban === 'function'){ window.renderKanban(); }
   }
@@ -952,7 +952,7 @@
     sessionStorage.setItem('activeCode', code);
     document.getElementById('currentUserName').textContent = NAMES[CODES[code]];
     showOnly(taskApp);
-    if(typeof window.renderTaskEditor === 'function'){ window.renderTaskEditor(); }
+    if(typeof window.renderHome === 'function'){ window.renderHome(); }
   }
 
   // Given a chosen person, route to PIN entry (returning user) or code
@@ -1100,6 +1100,10 @@
       }
     });
   });
+
+  // Login now lives permanently on Home rather than behind its own tab,
+  // so establish the signed-in/signed-out state as soon as the page loads.
+  checkSession();
 })();
 </script>
 
@@ -1194,56 +1198,42 @@
     return '';
   }
 
-  var expandedIds = new Set();
-
-  function renderHomeCard(t){
-    var trackLabel = t.track === 'dev' ? 'HR Projects' : 'Organizational Development';
-    var badgeCls = t.track === 'dev' ? 'track-dev' : 'track-od';
-    var idxLabel = String(t.order).padStart(2, '0');
-    var isOpen = expandedIds.has(t.id);
-    var ownerChips = (t.owners || []).map(personChip).join('');
-    var teamChips = (t.team || []).map(personChip).join('');
-    var stepsHtml = (t.subtasks || []).map(function(s, i){
-      return '<li' + stepLiClass(s.status) + '><span class="n">' + String(i + 1).padStart(2, '0') +
-             '</span><span class="txt">' + escapeHtml(s.text) + '</span></li>';
-    }).join('');
-    var noteHtml = t.note ? '<div class="note-box"><span class="mark">note —</span><span>' + escapeHtml(t.note) + '</span></div>' : '';
-    var bodyHtml = isOpen ? (
-      '<div class="assign-row">' +
-        '<div class="assign-group"><span class="assign-label">Owner</span><div class="people-list">' + ownerChips + '</div></div>' +
-        '<div class="assign-group"><span class="assign-label">Team</span><div class="people-list">' + teamChips + '</div></div>' +
-      '</div>' +
-      '<div class="item-divider"></div>' +
-      '<ul class="steps">' + stepsHtml + '</ul>' +
-      noteHtml
-    ) : '';
-    return '' +
-      '<div class="item' + (isOpen ? '' : ' collapsed') + '">' +
-        '<div class="item-top clickable" data-action="toggle-item" data-item-id="' + t.id + '">' +
-          '<div class="item-id"><span class="item-chevron">' + (isOpen ? '\u2212' : '+') + '</span><span class="item-index">' + idxLabel + '</span><span class="item-title">' + t.title + '</span></div>' +
-          '<div class="item-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
-          (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') +
-          '<button type="button" class="te-edit-btn" data-action="open-task" data-task="' + t.id + '">Details</button></div>' +
-        '</div>' +
-        bodyHtml +
-      '</div>';
-  }
 
   function renderHome(){
     var container = document.getElementById('itemList');
     var countEl = document.getElementById('filterCount');
+    var roadmapContent = document.getElementById('roadmapContent');
+    var signedOutNote = document.getElementById('roadmapSignedOutNote');
     if(!container) return;
-    var filtered = allTasks.filter(function(t){
-      var people = (t.owners || []).concat(t.team || []);
-      var ownerOk = activeOwners.size === 0 || people.some(function(p){ return activeOwners.has(p); });
-      var memberOk = activeMembers.size === 0 || people.some(function(p){ return activeMembers.has(p); });
-      return ownerOk && memberOk;
-    });
-    if(countEl) countEl.innerHTML = '<b>' + filtered.length + '</b> of ' + allTasks.length + ' initiatives shown';
+
     var heroCountEl = document.getElementById('heroCount');
     if(heroCountEl) heroCountEl.textContent = allTasks.length;
-    container.innerHTML = filtered.map(renderHomeCard).join('') || '<p class="te-empty">No initiatives yet.</p>';
+
+    var signedIn = !!currentPerson();
+    if(roadmapContent) roadmapContent.style.display = signedIn ? '' : 'none';
+    if(signedOutNote) signedOutNote.style.display = signedIn ? 'none' : '';
+
+    if(signedIn){
+      var filtered = allTasks.filter(function(t){
+        var people = (t.owners || []).concat(t.team || []);
+        var ownerOk = activeOwners.size === 0 || people.some(function(p){ return activeOwners.has(p); });
+        var memberOk = activeMembers.size === 0 || people.some(function(p){ return activeMembers.has(p); });
+        return ownerOk && memberOk;
+      });
+      if(countEl) countEl.innerHTML = '<b>' + filtered.length + '</b> of ' + allTasks.length + ' initiatives shown';
+      container.innerHTML = filtered.length ? filtered.map(renderEditorCard).join('') : '<p class="te-empty">No initiatives match this filter.</p>';
+    }
+
+    var mgrPanel = document.getElementById('managerPanel');
+    var showBtn = document.getElementById('showAddTaskBtn');
+    var manager = isManager();
+    if(showBtn){
+      showBtn.style.display = manager ? '' : 'none';
+      showBtn.textContent = addTaskPanelOpen ? 'Close' : '+ Add new task';
+    }
+    if(mgrPanel) mgrPanel.style.display = (manager && addTaskPanelOpen) ? '' : 'none';
   }
+  window.renderHome = renderHome;
 
   // Owner / member filter chips (already in the markup)
   Array.prototype.slice.call(document.querySelectorAll('.owner-chip')).forEach(function(chip){
@@ -1275,14 +1265,14 @@
   var expandAllBtn = document.getElementById('expandAllBtn');
   if(expandAllBtn){
     expandAllBtn.addEventListener('click', function(){
-      allTasks.forEach(function(t){ expandedIds.add(t.id); });
+      allTasks.forEach(function(t){ expandedEditorIds.add(t.id); });
       renderHome();
     });
   }
   var collapseAllBtn = document.getElementById('collapseAllBtn');
   if(collapseAllBtn){
     collapseAllBtn.addEventListener('click', function(){
-      expandedIds.clear();
+      expandedEditorIds.clear();
       renderHome();
     });
   }
@@ -1422,6 +1412,7 @@
       (editingTaskId === t.id ? 'Close' : 'Edit') + '</button>'
     ) : '';
     var editPanel = (manager && editingTaskId === t.id) ? renderEditPanel(t) : '';
+    var detailsBtn = '<button type="button" class="te-edit-btn" data-action="open-task" data-task="' + t.id + '">Details</button>';
     var chevron = '<span class="item-chevron" data-action="toggle-card" data-task="' + t.id + '" style="cursor:pointer;">' + (isOpen ? '\u2212' : '+') + '</span>';
     var bodyHtml = isOpen ? (
       '<div class="assign-row">' +
@@ -1441,25 +1432,11 @@
           '<div class="te-title-row" data-action="toggle-card" data-task="' + t.id + '" style="cursor:pointer;">' + chevron + mainDot + '<span class="te-title">' + idxLabel + '. ' + t.title + '</span></div>' +
           '<div class="te-badges"><span class="badge ' + badgeCls + '">' + trackLabel + '</span>' +
           (t.tag ? '<span class="badge status">' + escapeHtml(t.tag) + '</span>' : '') +
+          detailsBtn +
           editBtn + '</div>' +
         '</div>' +
         bodyHtml +
       '</div>';
-  }
-
-  function renderTaskEditor(){
-    var mount = document.getElementById('taskEditorMount');
-    if(!mount) return;
-    mount.innerHTML = allTasks.length ? allTasks.map(renderEditorCard).join('') : '<p class="te-empty">No main tasks yet.</p>';
-
-    var mgrPanel = document.getElementById('managerPanel');
-    var showBtn = document.getElementById('showAddTaskBtn');
-    var manager = isManager();
-    if(showBtn){
-      showBtn.style.display = manager ? '' : 'none';
-      showBtn.textContent = addTaskPanelOpen ? 'Close' : '+ Add new task';
-    }
-    if(mgrPanel) mgrPanel.style.display = (manager && addTaskPanelOpen) ? '' : 'none';
   }
 
   // ---------------------------------------------------------------------
@@ -1617,7 +1594,6 @@
     tip.style.top = top + 'px';
   }
   window.renderGantt = renderGantt;
-  window.renderTaskEditor = renderTaskEditor;
 
   // ---------------------------------------------------------------------
   // Kanban board: same filtered task set as the Gantt view, grouped by status
@@ -1896,12 +1872,7 @@
     var action = el.getAttribute('data-action');
     var taskId = el.getAttribute('data-task');
 
-    if(action === 'toggle-item'){
-      var itemId = el.getAttribute('data-item-id');
-      if(expandedIds.has(itemId)) expandedIds.delete(itemId);
-      else expandedIds.add(itemId);
-      renderHome();
-    } else if(action === 'open-task'){
+    if(action === 'open-task'){
       openTaskModal(taskId);
     } else if(action === 'toggle-kanban-card'){
       if(expandedKanbanIds.has(taskId)) expandedKanbanIds.delete(taskId);
@@ -1917,7 +1888,7 @@
       if(editingTaskId === taskId){ return; } // already forced open while editing
       if(expandedEditorIds.has(taskId)) expandedEditorIds.delete(taskId);
       else expandedEditorIds.add(taskId);
-      renderTaskEditor();
+      renderHome();
     } else if(action === 'cycle-main'){
       if(!isManager()) return;
       guardedCycle(el.getAttribute('data-guard-key'), el, function(){ return cycleMainStatus(taskId); });
@@ -1937,10 +1908,10 @@
     } else if(action === 'edit-sub'){
       if(!currentPerson()) return;
       editingSubKey = taskId + ':' + el.getAttribute('data-sub');
-      renderTaskEditor();
+      renderHome();
     } else if(action === 'cancel-sub-edit'){
       editingSubKey = null;
-      renderTaskEditor();
+      renderHome();
     } else if(action === 'save-sub-edit'){
       if(!currentPerson()) return;
       saveSubtaskEdit(taskId, el.getAttribute('data-sub'), el);
@@ -1956,10 +1927,10 @@
     } else if(action === 'toggle-edit'){
       if(!isManager()) return;
       editingTaskId = (editingTaskId === taskId) ? null : taskId;
-      renderTaskEditor();
+      renderHome();
     } else if(action === 'cancel-edit'){
       editingTaskId = null;
-      renderTaskEditor();
+      renderHome();
     } else if(action === 'save-edit'){
       if(!isManager()) return;
       saveMainTaskEdit(taskId, el);
@@ -2056,7 +2027,7 @@
       console.error(e);
     }
     saveBtn.disabled = false;
-    renderTaskEditor();
+    renderHome();
   }
 
   async function deleteSubtask(taskId, subId){
@@ -2123,7 +2094,7 @@
         startDate: startDate, endDate: endDate, owners: owners, team: team
       });
       editingTaskId = null;
-      renderTaskEditor();
+      renderHome();
     } catch(e){
       if(errEl) errEl.textContent = 'Could not save. Check your connection and try again.';
       if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Save changes'; }
@@ -2150,7 +2121,7 @@
   if(showAddTaskBtn){
     showAddTaskBtn.addEventListener('click', function(){
       addTaskPanelOpen = !addTaskPanelOpen;
-      renderTaskEditor();
+      renderHome();
     });
   }
 
@@ -2203,17 +2174,15 @@
   document.addEventListener('DOMContentLoaded', function(){});
 
   // Patch: re-render the editor whenever the Tasks tab is opened / login changes.
-  var tasksTabBtn = document.querySelector('.tab-btn[data-view="tasks"]');
-  if(tasksTabBtn){ tasksTabBtn.addEventListener('click', function(){ renderTaskEditor(); }); }
   var logoutBtnEl = document.getElementById('logoutBtn');
-  if(logoutBtnEl){ logoutBtnEl.addEventListener('click', function(){ renderTaskEditor(); }); }
+  if(logoutBtnEl){ logoutBtnEl.addEventListener('click', function(){ renderHome(); }); }
 
 
   db.collection('mainTasks').orderBy('order').onSnapshot(function(snapshot){
     allTasks = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
     var scrollX = window.scrollX, scrollY = window.scrollY;
     renderHome();
-    renderTaskEditor();
+    renderHome();
     renderGantt();
     renderKanban();
     if(openTaskId) renderTaskModal();
