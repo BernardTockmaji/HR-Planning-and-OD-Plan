@@ -1590,7 +1590,8 @@
     var title = '<div class="tt-title">' + t.title + '</div>';
     if(!subs.length) return title + '<div class="tt-empty">No subtasks yet.</div>';
     var rows = subs.map(function(s){
-      return '<div class="tt-sub"><span class="tt-dot ' + subtaskDotClass(s.status) + '"></span><span>' + escapeHtml(s.text) + '</span></div>';
+      var dep = s.dependsOn ? ('<div style="font-size:10.5px; color:var(--stone); margin:2px 0 0 15px;">Depends on: ' + escapeHtml(describeDependency(s.dependsOn)) + '</div>') : '';
+      return '<div class="tt-sub"><span class="tt-dot ' + subtaskDotClass(s.status) + '"></span><span>' + escapeHtml(s.text) + '</span></div>' + dep;
     }).join('');
     return title + rows;
   }
@@ -1753,8 +1754,9 @@
     var subtasksHtml = isOpen ? (
       '<div class="item-divider" style="margin:10px 0;"></div>' +
       '<ul class="steps">' + (t.subtasks || []).map(function(s, i){
+        var depLine = s.dependsOn ? ('<div class="te-subtask-depends" style="margin-left:0;">Depends on: ' + escapeHtml(describeDependency(s.dependsOn)) + '</div>') : '';
         return '<li' + stepLiClass(s.status) + '><span class="n">' + String(i + 1).padStart(2, '0') +
-               '</span><span class="txt">' + escapeHtml(s.text) + '</span></li>';
+               '</span><span class="txt">' + escapeHtml(s.text) + depLine + '</span></li>';
       }).join('') + '</ul>'
     ) : '';
     return '' +
@@ -1831,8 +1833,9 @@
     var ownerChips = (t.owners || []).map(personChip).join('');
     var teamChips = (t.team || []).map(personChip).join('');
     var subtasksHtml = (t.subtasks || []).map(function(s, i){
+      var depLine = s.dependsOn ? ('<div class="te-subtask-depends" style="margin-left:0;">Depends on: ' + escapeHtml(describeDependency(s.dependsOn)) + '</div>') : '';
       return '<li' + stepLiClass(s.status) + '><span class="n">' + String(i + 1).padStart(2, '0') +
-             '</span><span class="txt">' + escapeHtml(s.text) + '</span></li>';
+             '</span><span class="txt">' + escapeHtml(s.text) + depLine + '</span></li>';
     }).join('');
     var noteHtml = t.note ? '<div class="note-box"><span class="mark">note —</span><span>' + escapeHtml(t.note) + '</span></div>' : '';
 
