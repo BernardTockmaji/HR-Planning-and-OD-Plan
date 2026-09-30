@@ -338,7 +338,7 @@
   .dep-row{ display:grid; grid-template-columns:1fr auto; gap:18px; padding:18px 24px; border-top:1px solid var(--border-soft); align-items:center; }
   .dep-row:first-child{ border-top:none; }
   .dep-row .dep-desc{ font-size:14px; color:var(--ink); }
-  .dep-flow{ font-family:var(--serif); font-style:italic; font-size:12.5px; color:var(--stone); white-space:nowrap; }
+  .dep-flow{ font-family:var(--serif); font-style:italic; font-size:12.5px; color:var(--stone); text-align:right; max-width:320px; }
 
   /* ---------- Footer ---------- */
   .footer{ padding:60px 0 0; border-top:1px solid var(--border-soft); display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
@@ -452,6 +452,34 @@
     padding:14px 16px; margin:6px 0;
   }
 
+  .te-subtask-depends{
+    font-size:11px; color:var(--stone); margin-left:28px; margin-top:-4px; margin-bottom:6px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .te-subtask-depends .clear-dep{
+    background:none; border:none; color:var(--ink-faint); font-size:11px; cursor:pointer; padding:0 3px;
+  }
+  .te-subtask-depends .clear-dep:hover{ color:#d98080; }
+
+  .dep-picker{
+    border:1px solid var(--border); border-radius:10px; background:var(--panel-2);
+    padding:14px 16px; margin:6px 0; max-height:320px; overflow-y:auto;
+  }
+  .dep-picker-hint{ font-size:11.5px; color:var(--ink-faint); margin-bottom:10px; }
+  .dep-picker-task{
+    display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer;
+    font-size:13px; color:var(--ink);
+  }
+  .dep-picker-task:hover{ color:var(--stone); }
+  .dep-picker-task .chev{ font-size:11px; color:var(--ink-faint); width:12px; flex-shrink:0; }
+  .dep-picker-subs{ margin-left:20px; padding-left:12px; border-left:2px solid var(--border-soft); }
+  .dep-picker-sub{
+    padding:5px 0; cursor:pointer; font-size:12.5px; color:var(--ink-dim);
+  }
+  .dep-picker-sub:hover{ color:var(--stone); }
+  .dep-picker-sub.self{ color:var(--ink-faint); cursor:not-allowed; font-style:italic; }
+  .dep-picker-actions{ margin-top:12px; padding-top:12px; border-top:1px solid var(--border-soft); }
+
   .te-add-row{
     display:flex; gap:8px; margin-top:10px; opacity:0.5;
     transition:opacity .15s ease;
@@ -480,7 +508,7 @@
   /* ---------- Gantt view ---------- */
   .gantt-wrap{ border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:10px 24px 24px; overflow-x:auto; overflow-y:visible; }
   .gantt-scale{
-    position:relative; height:28px; margin-left:200px; border-bottom:1px solid var(--border-soft);
+    position:relative; height:36px; margin-left:200px; border-bottom:1px solid var(--border-soft);
     min-width:480px;
   }
   .gantt-tick{
@@ -489,7 +517,7 @@
   }
   .gantt-today{ position:absolute; top:0; bottom:0; border-left:1px solid var(--stone); z-index:3; pointer-events:none; }
   .gantt-today-label{
-    position:absolute; bottom:-19px; left:5px; font-size:9.5px; color:var(--bg);
+    position:absolute; top:38px; left:5px; font-size:9.5px; color:var(--bg);
     white-space:nowrap; background:var(--stone); padding:1px 6px; border-radius:4px; font-weight:600;
     letter-spacing:0.02em;
   }
@@ -800,14 +828,12 @@
       <div id="itemList"></div>
     </section>
 
-    <section class="section">
+    <section class="section" id="dependenciesSection" style="display:none">
       <div class="section-head">
         <h2>Dependencies</h2>
         <span class="section-num">— ii.</span>
       </div>
-      <div class="deps">
-        <div class="dep-row"><div class="dep-desc">BRD leads to FRD, which leads to Development.</div><div class="dep-flow">01 → 02 → 08</div></div><div class="dep-row"><div class="dep-desc">IPMP / MPP system enhancements complete before the IPMP &amp; MPP exercise runs.</div><div class="dep-flow">8c, 8d → 07</div></div><div class="dep-row"><div class="dep-desc">Jobs &amp; Titles cleansing completes before Salary Structure reflects in HRMS.</div><div class="dep-flow">11 → 10</div></div><div class="dep-row"><div class="dep-desc">Gaps identified in the SOP exercise feed Change Request Management.</div><div class="dep-flow">09 → 06</div></div><div class="dep-row"><div class="dep-desc">New team handover stays in sync with active development work.</div><div class="dep-flow">05 ↔ 08</div></div>
-      </div>
+      <div class="deps" id="depsList"></div>
     </section>
 
     </div>
@@ -818,7 +844,7 @@
   <div id="view-gantt" class="view">
   <div class="wrap">
 
-    <section class="hero" style="padding:64px 0 28px;">
+    <section class="hero" style="padding:64px 0 52px;">
       <div class="hero-eyebrow">HR Planning &amp; Organizational Development</div>
       <h1 style="font-size:clamp(34px,6vw,54px);">Project<br>Timelines.</h1>
       <p class="lede">Every main task plotted against its start and end dates.</p>
@@ -1254,8 +1280,37 @@
       showBtn.textContent = addTaskPanelOpen ? 'Close' : '+ Add new task';
     }
     if(mgrPanel) mgrPanel.style.display = (manager && addTaskPanelOpen) ? '' : 'none';
+
+    renderDependencies();
   }
   window.renderHome = renderHome;
+
+  // Dynamic Dependencies section: only appears once at least one subtask
+  // actually has a dependency set. Nothing hardcoded, nothing shown otherwise.
+  function renderDependencies(){
+    var section = document.getElementById('dependenciesSection');
+    var list = document.getElementById('depsList');
+    if(!section || !list) return;
+
+    var rows = [];
+    allTasks.forEach(function(t){
+      (t.subtasks || []).forEach(function(s){
+        if(!s.dependsOn) return;
+        var desc = describeDependency(s.dependsOn);
+        var ownerDesc = t.title.replace(/&amp;/g, '&') + ' \u2192 ' + s.text;
+        rows.push({ owner: ownerDesc, target: desc });
+      });
+    });
+
+    if(!rows.length){
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+    list.innerHTML = rows.map(function(r){
+      return '<div class="dep-row"><div class="dep-desc">' + escapeHtml(r.owner) + '</div><div class="dep-flow">depends on ' + escapeHtml(r.target) + '</div></div>';
+    }).join('');
+  }
 
   // Owner / member filter chips (already in the markup)
   Array.prototype.slice.call(document.querySelectorAll('.owner-chip')).forEach(function(chip){
@@ -1311,6 +1366,8 @@
   }
 
   var editingSubKey = null; // taskId + ':' + subId of the subtask currently being edited
+  var dependencyPickerKey = null; // taskId + ':' + subId of the subtask currently picking a dependency
+  var dependencyPickerExpanded = new Set(); // which main tasks are expanded within the open picker
 
   function renderSubpoints(taskId, sub){
     var pts = sub.subpoints || [];
@@ -1353,9 +1410,66 @@
     var dot = statusControl(sub.status, canAct, 'data-action="cycle-sub" data-task="' + taskId + '" data-sub="' + sub.id + '"', 'sub:' + taskId + ':' + sub.id);
     var datesLine = (sub.startDate || sub.endDate) ? ('<span class="te-subtask-dates">' + (sub.startDate || '—') + ' \u2192 ' + (sub.endDate || '—') + '</span>') : '';
     var editBtn = canAct ? '<button type="button" class="te-mini-btn" data-action="edit-sub" data-task="' + taskId + '" data-sub="' + sub.id + '" title="Edit subtask">\u270e</button>' : '';
+    var depBtn = canAct ? '<button type="button" class="te-mini-btn" data-action="pick-dep" data-task="' + taskId + '" data-sub="' + sub.id + '" title="Set a dependency">\uD83D\uDD17</button>' : '';
+
+    var dependsLine = '';
+    if(sub.dependsOn){
+      var depDesc = describeDependency(sub.dependsOn);
+      var clearBtn = canAct ? '<button type="button" class="clear-dep" data-action="clear-dep" data-task="' + taskId + '" data-sub="' + sub.id + '" title="Remove dependency">\u00d7</button>' : '';
+      dependsLine = '<div class="te-subtask-depends">Depends on: ' + escapeHtml(depDesc) + clearBtn + '</div>';
+    }
+
+    var pickerHtml = (dependencyPickerKey === key) ? renderDependencyPicker(taskId, sub.id) : '';
+
     return '' +
-      '<div class="te-subtask">' + dot + '<span class="te-subtask-text">' + escapeHtml(sub.text) + '</span>' + datesLine + editBtn + '</div>' +
+      '<div class="te-subtask">' + dot + '<span class="te-subtask-text">' + escapeHtml(sub.text) + '</span>' + datesLine + editBtn + depBtn + '</div>' +
+      dependsLine +
+      pickerHtml +
       renderSubpoints(taskId, sub);
+  }
+
+  // Human-readable description of a subtask's dependency target.
+  function describeDependency(dep){
+    var target = allTasks.filter(function(x){ return x.id === dep.taskId; })[0];
+    if(!target) return 'a removed item';
+    if(!dep.subId) return target.title.replace(/&amp;/g, '&');
+    var targetSub = (target.subtasks || []).filter(function(s){ return s.id === dep.subId; })[0];
+    if(!targetSub) return target.title.replace(/&amp;/g, '&') + ' (a removed subtask)';
+    return target.title.replace(/&amp;/g, '&') + ' \u2192 ' + targetSub.text;
+  }
+
+  // The picker shown when choosing a dependency for one specific subtask.
+  // Lists every main task; expand one to pick a specific subtask instead of the whole task.
+  function renderDependencyPicker(forTaskId, forSubId){
+    var rows = allTasks.map(function(t){
+      var isSelf = t.id === forTaskId;
+      var expanded = dependencyPickerExpanded.has(t.id);
+      var chev = (t.subtasks || []).length ? (expanded ? '\u2212' : '+') : '\u00b7';
+      var taskRow = '' +
+        '<div class="dep-picker-task">' +
+          '<span class="chev" data-action="dep-toggle-expand" data-task="' + t.id + '">' + chev + '</span>' +
+          '<span data-action="dep-choose-task" data-task="' + t.id + '" data-choose-task="' + t.id + '" data-sub="' + forSubId + '" data-owner-task="' + forTaskId + '" style="flex:1;">' + t.title + '</span>' +
+        '</div>';
+      var subsHtml = '';
+      if(expanded && (t.subtasks || []).length){
+        subsHtml = '<div class="dep-picker-subs">' + t.subtasks.map(function(s){
+          var self = isSelf && s.id === forSubId;
+          return '<div class="dep-picker-sub' + (self ? ' self' : '') + '"' +
+            (self ? '' : ' data-action="dep-choose-sub" data-choose-task="' + t.id + '" data-choose-sub="' + s.id + '" data-task="' + forTaskId + '" data-sub="' + forSubId + '"') +
+            '>' + escapeHtml(s.text) + (self ? ' (this subtask)' : '') + '</div>';
+        }).join('') + '</div>';
+      }
+      return taskRow + subsHtml;
+    }).join('');
+
+    return '' +
+      '<div class="dep-picker">' +
+        '<div class="dep-picker-hint">Pick a main task, or expand one (+) to pick one of its subtasks.</div>' +
+        rows +
+        '<div class="dep-picker-actions">' +
+          '<button type="button" class="te-edit-cancel" data-action="cancel-dep">Cancel</button>' +
+        '</div>' +
+      '</div>';
   }
 
   function renderEditPanel(t){
@@ -1954,6 +2068,28 @@
     } else if(action === 'delete-point'){
       if(!currentPerson()) return;
       deleteSubpoint(taskId, el.getAttribute('data-sub'), el.getAttribute('data-point'));
+    } else if(action === 'pick-dep'){
+      if(!currentPerson()) return;
+      dependencyPickerKey = taskId + ':' + el.getAttribute('data-sub');
+      dependencyPickerExpanded.clear();
+      renderHome();
+    } else if(action === 'cancel-dep'){
+      dependencyPickerKey = null;
+      renderHome();
+    } else if(action === 'clear-dep'){
+      if(!currentPerson()) return;
+      clearDependency(taskId, el.getAttribute('data-sub'));
+    } else if(action === 'dep-toggle-expand'){
+      var expandTaskId = el.getAttribute('data-task');
+      if(dependencyPickerExpanded.has(expandTaskId)) dependencyPickerExpanded.delete(expandTaskId);
+      else dependencyPickerExpanded.add(expandTaskId);
+      renderHome();
+    } else if(action === 'dep-choose-task'){
+      if(!currentPerson()) return;
+      setDependency(el.getAttribute('data-owner-task'), el.getAttribute('data-sub'), el.getAttribute('data-choose-task'), null);
+    } else if(action === 'dep-choose-sub'){
+      if(!currentPerson()) return;
+      setDependency(taskId, el.getAttribute('data-sub'), el.getAttribute('data-choose-task'), el.getAttribute('data-choose-sub'));
     } else if(action === 'toggle-edit'){
       if(!isManager()) return;
       editingTaskId = (editingTaskId === taskId) ? null : taskId;
@@ -2077,6 +2213,33 @@
       if(!doc.exists) return;
       var subtasks = (doc.data().subtasks || []).map(function(s){
         if(s.id === subId){ s.subpoints = (s.subpoints || []).filter(function(p){ return p.id !== pointId; }); }
+        return s;
+      });
+      tx.update(ref, { subtasks: subtasks });
+    });
+  }
+
+  async function setDependency(ownerTaskId, ownerSubId, depTaskId, depSubId){
+    var ref = db.collection('mainTasks').doc(ownerTaskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === ownerSubId){ s.dependsOn = { taskId: depTaskId, subId: depSubId || null }; }
+        return s;
+      });
+      tx.update(ref, { subtasks: subtasks });
+    });
+    dependencyPickerKey = null;
+  }
+
+  async function clearDependency(ownerTaskId, ownerSubId){
+    var ref = db.collection('mainTasks').doc(ownerTaskId);
+    await db.runTransaction(async function(tx){
+      var doc = await tx.get(ref);
+      if(!doc.exists) return;
+      var subtasks = (doc.data().subtasks || []).map(function(s){
+        if(s.id === ownerSubId){ s.dependsOn = null; }
         return s;
       });
       tx.update(ref, { subtasks: subtasks });
